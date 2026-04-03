@@ -11,23 +11,23 @@ router = APIRouter()
 @router.post("/register")
 async def register_university(university:UniversityCreate):
     db = get_db()
-    exist_application = await db.applications.find_one({"official_email": university.official_email})
+    exist_application = await db.applications.find_one({"email": university.email})
     if exist_application:
         raise HTTPException(status_code=400, detail="Application already exists")
-    exist_university = await db.universities.find_one({"official_email": university.official_email})
+    exist_university = await db.universities.find_one({"email": university.email})
     if exist_university:
         raise HTTPException(status_code=400, detail="University already exists")
     application = {
         "university_name": university.university_name,
         "country": university.country,
-        "official_email": university.official_email,
+        "email": university.email,
         "hashed_password": hash_password(university.password),
         "status": "Pending",
         "register_date": datetime.now(timezone.utc),
         "role":"university",
         "total_certificates":0
     }
-    await db.universities.insert_one(application)
+    await db.applications.insert_one(application)
     return {"message": "Application created successfully"}
 
 #first o all application is applied to us (admin) and we approve it and then it is added to the universities collection
@@ -59,7 +59,7 @@ async def approve_application(id:str,current_user: dict=Depends(require_admin)):
     university = {
         "university_name": application["university_name"],
         "country": application["country"],
-        "official_email": application["official_email"],
+        "email": application["email"],
         "hashed_password": application["hashed_password"],
         "status": "Approved",
         "register_date": datetime.now(timezone.utc),

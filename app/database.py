@@ -9,7 +9,7 @@ async def connect_db():
     db = client[settings.DATABASE_NAME] 
     await db.users.create_index("email", unique=True)
     await db.universities.create_index("email", unique=True)
-    await db.universities.create_index("wallet_address", unique=True)
+    await db.universities.create_index("wallet_address", unique=True,sparse=True) #sparse means ignore null when enforce unique constraint only if the wallet address is not null enforce unique constraint means that the wallet address must be unique
     await db.certificates.create_index("certificate_hash", unique=True)
     await db.applications.create_index("email", unique=True)
     print("Connected to MongoDB")
