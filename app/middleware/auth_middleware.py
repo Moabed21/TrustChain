@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 from app.config import settings
 from app.database import get_db
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 #this is used to tell the function that this is not a query parameter , its a bearer token
 async def get_current_user(token: str  = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
