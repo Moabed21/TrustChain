@@ -15,22 +15,30 @@ from jose import jwt
 # jose is a library for working with JWT tokens
 # jwt to encode and decode tokens
 # JWTError  error class if token is invalid
-from passlib.context import CryptContext
-# passlib is a password hashing library
-# CryptContext manages which hashing algorithm to use
+from fastapi.security import OAuth2PasswordRequestForm
+# OAuth2PasswordRequestForm is a built in FastAPI class that reads username and password from the request body
+# it expects form data (not JSON) with fields: username and password
 from app.database import get_db
 # our function that returns the MongoDB database object
 from app.config import settings
 # our settings object that reads from .env file
+from typing import Annotated
+# Annotated is a built in FastAPI class that allows us to annotate the type of the parameter
+import bcrypt
+# bcrypt is a password hashing library
 router = APIRouter()
 # creates a router object from the APIRouter class
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-# creates a password context for hashing and verifying passwords
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
 # hash the password using the bcrypt algorithm the output is a string of characters hashed version of the password stored in the database
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8")
+    )
 # verify the password using the bcrypt algorithm the output is a boolean True or False takes the plain password and the hashed password as input and returns True or False
 def create_access_token(data: dict) -> str:
     payload = data.copy()
@@ -43,7 +51,7 @@ def create_access_token(data: dict) -> str:
     #encode the payload using the jwt library and return the encoded token the algo is the JWT ALGORITHM from settings in config.py right now it is HS256
 @router.post("/login")  # pyright: ignore[reportUnreachable]
     #creates an endpoint for the login route using POST because we are sending data to the server (username and password)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 #async because FASTAPI works Asyncronously, form_data automatically reads username and password from the request body, Depends() tells FASTAPI to run OAuth2PasswordRequestForm and inject the result into the form_data parameter
     db = get_db()
         # gets the database object from the database module
