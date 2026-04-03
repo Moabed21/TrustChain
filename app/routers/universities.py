@@ -8,7 +8,7 @@ from app.routers.auth import hash_password
 
 router = APIRouter()
 
-@router.get("/register")
+@router.post("/register")
 async def register_university(university:UniversityCreate):
     db = get_db()
     exist_application = await db.applications.find_one({"official_email": university.official_email})
