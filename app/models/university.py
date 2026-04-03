@@ -6,7 +6,7 @@ from datetime import datetime, timezone #to handle date and time
 class UniversityBase(BaseModel):  #every class in the db has them
     university_name:str
     country:str
-    official_email:EmailStr
+    email:EmailStr
 
 class UniversityCreate(UniversityBase): #event happen when University is created ,adding password
     password:str
