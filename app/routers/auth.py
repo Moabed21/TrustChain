@@ -76,12 +76,6 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         # sub is the subject of the token which is the user's MongoDB ID sub is standard JWT field email is the email of the user role is the role of the user str() because MongoDB ID is an ObjectId objectJWT needs a plain string wallet_address is the wallet address of the user if it is not found then it is None
     return {"access_token": token, "token_type": "bearer", "role": user["role"] , "email": user["email"]}
         # return the token and the token type "bearer" is the standard token type for JWT token that is used to authenticate the user and send with each request to the server to verify the user is authenticated in the frontend in the future requests role is the role of the user email is the email of the user 
-#@router.get("/me")
-#async def get_me():
-#    return {"message": "placeholder for now"}
-            #placeholder for now
-
-#to be accepted
 
 @router.get("/me")
 async def get_me(current_user: dict = Depends(get_current_user)):
@@ -95,9 +89,3 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 @router.post("/logout")
 async def logout():
     return {"message": "Logout successful"}
-
-#to be discussed
-# @router.post("/refresh")
-# async def refresh_token(current_user: dict = Depends(get_current_user)):
-#     token = create_access_token({"sub": str(current_user["_id"]),"email": current_user["email"],"role": current_user["role"],"wallet_address": current_user.get("wallet_address", None)})
-#     return {"access_token": token, "token_type": "bearer"}
