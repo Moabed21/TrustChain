@@ -1,0 +1,14 @@
+# University Dashboard Implementation
+
+- [ ] Create `src/components/university/Dashboard.jsx`
+  - [ ] Implement stats calculation from mockData
+  - [ ] Implement Dashboard ui (Header, Stats, Quick Actions, Recent Certificates based on specs)
+- [ ] Add CSS to [src/index.css](file:///c:/Users/ahmad/Desktop/anti/src/index.css)
+  - [ ] Add all required dashboard classes verbatim
+- [ ] Modify routing & navigation
+  - [ ] Update [src/pages/UniversityDashboard.jsx](file:///c:/Users/ahmad/Desktop/anti/src/pages/UniversityDashboard.jsx) (import Dashboard, add Route, update Navigate default)
+  - [ ] Update [src/components/shared/Sidebar.jsx](file:///c:/Users/ahmad/Desktop/anti/src/components/shared/Sidebar.jsx) (add Dashboard to navItems for university role)
+  - [ ] Update [src/pages/LoginPage.jsx](file:///c:/Users/ahmad/Desktop/anti/src/pages/LoginPage.jsx) (change login success redirect for university)
+- [ ] Verify functionality
+  - [ ] Build/Run local dev server
+  - [ ] Check University Dashboard render, calculations, and routing
