@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pymongo
+motor
+python-jose
+passlib
+bcrypt
+python-multipart
+web3
+ipfshttpclient
+cryptography
+qrcode
+pillow
+python-dotenv
+pydantic
+pydantic-settings
+email-validator
