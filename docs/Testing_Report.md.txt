@@ -1,0 +1,96 @@
+# TrustChain Testing Report
+**Project:** TrustChain (Academic Certificate Verification System)  
+**Testing Framework:** Vitest  
+**DOM Environment:** jsdom  
+**UI Testing Library:** React Testing Library (@testing-library/react)  
+**Current Status:** ✅ **36 / 36 Tests Passing**
+
+---
+
+## 1. Executive Summary
+This document summarizes the automated quality assurance processes covering the TrustChain React application. We have firmly established a locally-hosted testing suite built natively on top of **Vitest** utilizing **React Testing Library** and a simulated **jsdom** browser environment. 
+
+The test coverage spans across Authentication state management, Protected Admin and University portals, Route redirection behaviors, and the public-facing certificate verification page. As of the latest run, **all 36 unit/integration tests execute flawlessly.**
+
+---
+
+## 2. Authentication & Routing
+
+### [AuthContext.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/context/AuthContext.test.jsx:0:0-0:0)
+*Verified the underlying context provider's logic managing the global user state.*
+- **Initial State Validation:** Asserted that `isLoggedIn` initiates as `false` with a `null` user profile upon app launch.
+- **Admin Authentication:** Executed the [login](cci:1://file:///c:/Users/ahmad/Desktop/anti/src/context/AuthContext.jsx:15:2-23:4) function via `act()`, asserting that `admin@trustchain.com` authenticates successfully, injecting an `{ role: 'admin' }` object into `user`.
+- **University Authentication:** Executed login evaluations guaranteeing that university proxies correctly secure `{ role: 'university' }` parameters globally.
+- **Logout Execution:** Verified that [logout](cci:1://file:///c:/Users/ahmad/Desktop/anti/src/context/AuthContext.jsx:25:2-28:4) safely wipes credentials and restores `isLoggedIn` to `false`.
+
+### [LoginPage.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/pages/LoginPage.test.jsx:0:0-0:0)
+*Evaluated React DOM interactions, error handling, and redirection hooks.*
+- **DOM Rendering:** Checked that "Email" and "Password" inputs, along with the login button, render effectively.
+- **Invalid Credential Constraints:** Mocked invalid credentials to ensure the unauthenticated error box strictly intercepts the login sequence natively.
+- **Role-Based Redirection:** Wrapped the component within `<BrowserRouter>` and mocked [useNavigate()](cci:1://file:///c:/Users/ahmad/Desktop/anti/src/pages/RegisterPage.test.jsx:11:4-11:37). Verified that hitting submit securely dispatches admins to `/admin/pending` and universities to `/university/dashboard`.
+
+---
+
+## 3. Admin Portal
+
+### [PendingApplications.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/components/admin/PendingApplications.test.jsx:0:0-0:0)
+*Ensured admin evaluations parse incoming payload mock states dynamically.*
+- **Form/Table Populating:** Injected `mockPendingApplications` to guarantee universities (e.g., Harvard, Oxford) map their columns and render visibly.
+- **Approval Sequencing:** Simulated a user clicking **Approve** on a specific row, validating that it correctly sets the component's internal state to invoke `ConfirmModal` with positive prompt confirmations.
+- **Rejection Sequencing:** Confirmed that clicking **Reject** triggers the identical portal but feeds warning-based red button texts and irrevocable action warnings.
+
+### [RegisteredUniversities.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/components/admin/RegisteredUniversities.test.jsx:0:0-0:0)
+*Managed structural tests assessing dynamic array mapping and varied UI states.*
+- **Data Hydration:** Verified standard mock mapping representing both active and suspended universities dynamically.
+- **Suspension Actions:** Simulated clicking **Suspend** strictly on `active` nodes to trace `ConfirmModal`'s suspension prompt.
+- **Reactivation Actions:** Targeted suspended institution rows, bypassing "Suspend" arrays to assert that the **Reactivate** button natively exists and successfully summons the unbinding `ConfirmModal` dialogue.
+
+---
+
+## 4. University Portal
+
+### [Dashboard.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/components/university/Dashboard.test.jsx:0:0-0:0)
+*Provided robust arithmetic array assessments and layout boundary verification.*
+- **Stats Calculation:** Manually generated `new Date()` mock objects matching dynamic UTC boundaries to evaluate the "Issued This Month" logic blocks accurately.
+- **Historical Counts:** Validated calculation logic converting valid and revoked certificate counts to respective percentages securely against absolute metric cards.
+- **Recent Issuances Array Limit:** Injected large >5 node arrays into the environment. Tested that the UI strictly applies `.slice(-5).reverse()` by locating the 5 latest nodes while explicitly verifying the oldest inputs remained hidden.
+
+### [IssueCertificate.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/components/university/IssueCertificate.test.jsx:0:0-0:0)
+*Validates file management logic and complex form interception mechanics.*
+- **DOM Initialization:** Tracked Student Name, Degree, Date, and `type="file"` inputs.
+- **Form Constraints:** Intercepted submit buttons to guarantee pure UI failures fire the Javascript `alert()` fallback for missing PDF uploads.
+- **Success Hashes:** Used Javascript `new File()` objects mapped through `fireEvent.change` to successfully validate standard forms. Captured the dynamic random `CERTX` hash logic injecting back as a confirmed success state.
+
+### [IssuedCertificates.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/components/university/IssuedCertificates.test.jsx:0:0-0:0)
+*Traced university certificate logs mapped against individual dynamic actions.*
+- **Record Mapping:** Ensured multiple active/revoked mock data states appear effectively inside the array table.
+- **View Details Integration:** Clicking details targets a localized DOM element ensuring [CertificateDetailsModal](cci:1://file:///c:/Users/ahmad/Desktop/anti/src/components/university/CertificateDetailsModal.jsx:3:0-85:2) components spawn with the matched dynamic payload.
+- **Revocation Trigger Validation:** Verified that `valid`-only certificates display the revoke option, and correctly execute the native `ConfirmModal` wrapper for blockchain deletion verification.
+
+### [CertificateDetailsModal.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/components/university/CertificateDetailsModal.test.jsx:0:0-0:0)
+*Evaluated abstract display properties natively utilizing prop injection.*
+- **Void Rendering:** Tested component destruction asserting it returns `null` entirely when `isOpen=false`.
+- **Property Population:** Injected `sampleMockCert` arrays verifying Name, Hash, Status, Date, and Degree attributes match precisely inside a locked modal overlay.
+
+---
+
+## 5. Public & Shared Components
+
+### [PublicPage.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/pages/PublicPage.test.jsx:0:0-0:0)
+*Evaluated end-user behaviors targeting public hash verification structures.*
+- **UI Structure:** Proven visualization for both the manual hash text input and the static QR-scanner placeholder interface elements.
+- **Valid Hash Simulation:** Entered `CERT123456` mapping directly to the validity block, validating that the green "Verified" wrapper structurally embeds matching identity attributes.
+- **Revoked Hash Simulation:** Entered `CERT789012` natively, explicitly ensuring the UI logic traps it in the yellow warnings state indicating the certificate structure remains but is flagged revoked.
+- **Unknown Parameter Trapping:** Sent randomized broken strings triggering the "Could not be found" null boundary checks successfully.
+
+### [RegisterPage.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/pages/RegisterPage.test.jsx:0:0-0:0)
+*Validated the frontend signup loop constraints against form submissions.*
+- **Form Architecture:** Rendered all native password, string, and official email configurations.
+- **Mismatch Logic:** Dispatched varied credentials inside the confirm block checking that `alert()` efficiently trips "Passwords don't match" without firing network requests.
+- **Timeout Simulator (`useFakeTimers`):** Successfully bypassed form sequences using valid credentials. Advanced `vitest` time sequencing natively over 3 intervals to evaluate that the "Request Submitted" UI banner persists before invoking the React Router login redirect logic.
+
+### [StatusBadge.test.jsx](cci:7://file:///c:/Users/ahmad/Desktop/anti/src/components/shared/StatusBadge.test.jsx:0:0-0:0)
+*Asserted CSS variable handling targeting reusable native React components.*
+- **Valid String Mapping:** Implemented standard styling logic attaching `status-valid` styling elements exactly to injected variables.
+- **Revoke String Mapping:** Tracked `status-revoked` logic accurately. 
+- **Graceful UI Fallbacks:** Fed unexpected values to the system (e.g. "pending") proving that abstract structures correctly inherit `status-invalid` class boundaries to avoid client crashes.
