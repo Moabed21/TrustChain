@@ -29,10 +29,10 @@ def _encrypt(data: bytes) -> str:
     blob = nonce + cipher
     return base64.urlsafe_b64encode(blob).decode("utf-8")
 
-def encrypt_pdf(pdf_data: bytes) -> bytes:
+def encrypt_pdf(pdf_data: bytes) -> str:
     return _encrypt(pdf_data)
 
-def decrypt_pdf(pdf_data: bytes) -> bytes:
+def decrypt_pdf(pdf_data: str) -> bytes:
     return _decrypt(pdf_data)
 
 
