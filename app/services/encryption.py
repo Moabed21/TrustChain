@@ -1,4 +1,4 @@
-from cryptography.hazmat.bindings._rust.openssl.aead import AESGCM
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import base64
 import os
 from app.config import settings
