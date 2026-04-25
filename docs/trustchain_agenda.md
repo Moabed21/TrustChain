@@ -115,3 +115,29 @@
 - Full system demo run-through
 - Prepare sample data (test university, test certificates)
 - Confirm Amoy testnet wallet funded for demo
+
+---
+/models done
+
+/services
+-blockchain.py 
+
+/routers done
+-verify.py
+-certificates.py
+
+/middleware done
+
+config.py done
+database.py done
+main.py done
+
+contracts not done
+tests not done
+frontend semidone
+---
+now 3 days 3 sessions remains for backend team 25/04
+create the contract 
+verify router
+certificates router review 
+review the whole project
