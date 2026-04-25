@@ -16,3 +16,4 @@ pydantic
 pydantic-settings
 email-validator
 pyzbar
+httpx
