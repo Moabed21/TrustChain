@@ -16,7 +16,7 @@ class UniversityInDB(UniversityBase):   #what actually saved in mongodb
     status:str="Pending"
     hashed_password:str
     register_date:datetime=datetime.now(timezone.utc) #must be in utc timezone added to avoid timezone issues added it in import
-    wallet_address:str
+    wallet_address:Optional[str]=None #was with no default value so it will crash
 
 class UniversityResponse(UniversityBase):#return values of timestamp and if (for confirmation)
     register_date:datetime
