@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = ""
     JWT_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = ""
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 #30 minutes 1448 is for testing =24hr
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = "" #no need here moved to the env
     POLYGON_RPC_URL: str = ""
     CONTRACT_ADDRESS: str = ""
     ADMIN_WALLET_ADDRESS: str = ""
