@@ -28,7 +28,7 @@ async def upload_to_ipfs(encrypted_pdf: str) -> str:
                 #this is how we upload a file to ipfs, 'file' is the form field name, 'certificate.enc' is the file name, file_bytes is the file content and application/octet-stream is the file type
                 
                 "file": ("certificate.enc", file_bytes, "application/octet-stream") 
-            },  
+            },
             timeout=30.0,   #if it takes more than 30 seconds to upload to ipfs it will give timeout error
         )
 
@@ -52,6 +52,4 @@ async def fetch_from_ipfs(cid: str) -> str:
     if response.status_code != 200:
         raise RuntimeError(f"IPFS fetch failed [{response.status_code}]: {response.text}")
     #if the response is not 200 it will raise an error with the status code and the response text
-    
-  
     return response.text #it is the base64url encoded encrypted pdf as a string

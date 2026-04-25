@@ -5,6 +5,7 @@ from app.models.university import UniversityCreate,UniversityResponse
 from app.middleware.auth_middleware import require_university,require_admin
 from datetime import datetime, timezone #to handle date and time
 from app.routers.auth import hash_password
+from web3 import Web3
 
 router = APIRouter()
 
@@ -100,3 +101,10 @@ async def reactivate_university(id:str,current_user: dict=Depends(require_admin)
     
     await db.universities.update_one({"_id": ObjectId(id)}, {"$set": {"status": "Active"}})
     return {"message":"University reactivated successfully"}
+
+@router.put("/me/wallet")
+async def register_wallet():
+    current_user = Depends(require_university)
+    db = get_db()
+
+    if not register_wallet
