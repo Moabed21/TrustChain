@@ -23,5 +23,5 @@ class UniversityResponse(UniversityBase):#return values of timestamp and if (for
     status:str
     total_certificates:int
     id:Optional[str]= None #str because it is a mongodb id which is a string like "abc123"
-
+    wallet_address: Optional[str] = None #added it to get it from first login
 #basemodel has asequence like the sown above which consists in 4 bases (classes)
