@@ -1,4 +1,3 @@
-
 import hashlib
 def hash_pdf(pdf_bytes: bytes) -> str:
 

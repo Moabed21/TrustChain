@@ -107,4 +107,4 @@ async def register_wallet():
     current_user = Depends(require_university)
     db = get_db()
 
-    if not register_wallet
+    # if not register_wallet

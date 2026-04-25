@@ -13,11 +13,13 @@ class Settings(BaseSettings):
     CONTRACT_ADDRESS: str = ""
     ADMIN_WALLET_ADDRESS: str = ""
     ADMIN_PRIVATE_KEY: str = ""
+    FUNDING_AMOUNT: int = ""
     PINATA_API_KEY: str = ""
     PINATA_SECRET_KEY: str = ""
     PINATA_JWT_KEY: str = ""
     AES_SECRET_KEY: str = ""
-
+    CHAIN_ID : int = ""
+    GAS : int = ""
     class Config:
         env_file = ".env"
 
