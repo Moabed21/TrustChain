@@ -126,7 +126,6 @@ async def register_wallet(body:WalletRegistration , current_user: dict = Depends
         raise HTTPException(status_code=400, detail={"message":"Wallet address used for another university"})
     #check if the wallet is registered to any university
     await db.universities.update_one({"_id": ObjectId(current_user["id"])}, {"$set": {"wallet_address": checksumed_address}})
-    return {"message":"Wallet address registered successfully"}
     # set wallet address for the current user 
     try:
         tx_hash = await fund(checksumed_address)
