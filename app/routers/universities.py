@@ -6,7 +6,8 @@ from app.middleware.auth_middleware import require_university,require_admin
 from datetime import datetime, timezone #to handle date and time
 from app.routers.auth import hash_password
 from web3 import Web3
-
+from app.services.funding import fund
+from pydantic import BaseModel
 router = APIRouter()
 
 @router.post("/register")
@@ -102,9 +103,39 @@ async def reactivate_university(id:str,current_user: dict=Depends(require_admin)
     await db.universities.update_one({"_id": ObjectId(id)}, {"$set": {"status": "Active"}})
     return {"message":"University reactivated successfully"}
 
-@router.put("/me/wallet")
-async def register_wallet():
-    current_user = Depends(require_university)
-    db = get_db()
+class WalletRegistration(BaseModel):
+    wallet_address:str
+    #validate the the http request is valid json and contains the wallet address as a string to be used in the wallet endpoint
 
-    # if not register_wallet
+@router.put("/me/wallet")
+async def register_wallet(body:WalletRegistration , current_user: dict = Depends(require_university)):
+#this endpoint is called by frontend in the first login of the university to
+#1-validate the wallet address
+#2- save it in the db in the university document
+#3-send fees to the university wallet
+    db = get_db()
+    if current_user.get("wallet_address"):
+        raise HTTPException(status_code=400, detail={"message":"Wallet address already registered"})
+    # check if the wallet address already set for this university
+    if not Web3.is_address(body.wallet_address):
+        raise HTTPException(status_code=400, detail={"message":"Invalid wallet address"})
+    #validate the address format
+    checksumed_address = Web3.to_checksum_address(body.wallet_address)
+    #format the address to EIP-55 (checksum format) before storing in db
+    if await db.universities.find_one({"wallet_address": checksumed_address}):
+        raise HTTPException(status_code=400, detail={"message":"Wallet address used for another university"})
+    #check if the wallet is registered to any university
+    await db.universities.update_one({"_id": ObjectId(current_user["id"])}, {"$set": {"wallet_address": checksumed_address}})
+    return {"message":"Wallet address registered successfully"}
+    # set wallet address for the current user 
+    try:
+        tx_hash = await fund(checksumed_address)
+        #fund the uni wallet using funding service
+    except Exception as e:
+        print(f"Error in funding the uni wallet {checksumed_address}",e)
+        return {"message":"Wallet address registered successfully but funding failed","wallet_address": checksumed_address, "funded": False}
+        #if the funding fail but the wallet is set we raise error and dont remove the wallet so admin can fund it later manually    
+    return {"message":"Wallet address registered successfully and funded","wallet_address": checksumed_address, "funded": True,"funding_tx_hash":tx_hash}
+    #if the funding done successfully return message
+    
+   
