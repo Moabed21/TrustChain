@@ -130,7 +130,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+      <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
         <div className="card" style={{ padding: '24px', backgroundColor: '#FFFFFF' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Certificates Issued per Month</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -174,7 +174,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+      <div className="bottom-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
         <div className="card" style={{ padding: '24px', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600' }}>Recent Activity</h3>

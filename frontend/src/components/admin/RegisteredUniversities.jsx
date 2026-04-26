@@ -70,6 +70,7 @@ const RegisteredUniversities = () => {
       </div>
 
       <div className="card" style={{ overflowX: 'auto' }}>
+        <div className="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -128,6 +129,7 @@ const RegisteredUniversities = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <ConfirmModal 

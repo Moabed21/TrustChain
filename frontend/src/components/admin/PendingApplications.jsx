@@ -40,6 +40,7 @@ const PendingApplications = () => {
         </div>
       ) : (
         <div className="card" style={{ overflowX: 'auto' }}>
+          <div className="table-wrapper">
           <table>
             <thead>
               <tr>
@@ -81,6 +82,7 @@ const PendingApplications = () => {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

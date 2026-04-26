@@ -128,6 +128,7 @@ const Dashboard = () => {
             <p className="empty-state-subtitle">Issue your first certificate to see it here</p>
           </div>
         ) : (
+          <div className="table-wrapper">
           <table>
             <thead>
               <tr>
@@ -152,6 +153,7 @@ const Dashboard = () => {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

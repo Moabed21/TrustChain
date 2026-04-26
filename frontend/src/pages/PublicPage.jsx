@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, QrCode, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { ShieldCheck, QrCode, CheckCircle2, XCircle, AlertCircle, Camera, Upload, X, ArrowLeft } from 'lucide-react';
 import { mockCertificates } from '../data/mockData';
 import StatusBadge from '../components/shared/StatusBadge';
 import logo from '../assets/logo.png';
@@ -14,6 +14,56 @@ const PublicPage = () => {
   const [result, setResult] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
   const { isDark } = useTheme();
+
+  const [scanMode, setScanMode] = useState(null);
+  // null | 'camera' | 'file'
+  const [cameraError, setCameraError] = useState('');
+  const [stream, setStream] = useState(null);
+  const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const startCamera = async () => {
+    setCameraError('');
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      setStream(mediaStream);
+      setScanMode('camera');
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
+    } catch (err) {
+      setCameraError('Camera not available. Please upload a QR code image instead.');
+      setScanMode('file');
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setScanMode(null);
+  };
+
+  const handleQRFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // UI only for now - will connect to QR decode API later
+      alert(`PDF selected: ${file.name}\nWill be verified via backend.`);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   const handleVerify = () => {
     if (!hashInput.trim()) return;
@@ -156,7 +206,7 @@ const PublicPage = () => {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0A1628', marginTop: 0, paddingTop: 0, position: 'relative' }}>
       <header style={{ background: '#0D1B3E', width: '100%', position: 'relative' }}>
-      
+
         {/* New Single Unified Top Bar */}
         <div style={{
           background: 'transparent',
@@ -213,7 +263,7 @@ const PublicPage = () => {
             </button>
           </div>
         </div>
-      
+
         {/* Hero Content */}
         <div style={{ position: 'relative', width: '100%' }}>
           <video
@@ -265,9 +315,9 @@ const PublicPage = () => {
             to { opacity: 1; transform: translateY(0); }
           }
         `}</style>
-        
+
         <div style={{ width: '100%', maxWidth: '820px' }}>
-          <div className="card" style={{ 
+          <div className="card" style={{
             padding: '32px',
             background: isDark ? '#0F2044' : '#FFFFFF',
             border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #C8D0E8',
@@ -275,28 +325,243 @@ const PublicPage = () => {
             boxShadow: isDark ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.07)'
           }}>
             <h2 style={{ marginBottom: '24px', fontSize: '24px', color: isDark ? '#FFFFFF' : '#0D1B3E' }}>Verify Certificate</h2>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '32px' }}>
-              
+
               {/* Left Column - QR */}
               <div className="qr-border-animated">
                 <div style={{
-                  background: isDark ? '#0D1B3E' : '#FFFFFF',
+                  background: 'var(--bg-card)',
                   borderRadius: '10px',
-                  padding: '28px',
-                  textAlign: 'center',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%'
+                  padding: '24px',
+                  textAlign: 'center'
                 }}>
-                  <QrCode color="#94A3B8" size={52} />
-                  <h3 style={{ marginTop: '12px', marginBottom: '8px', fontSize: '16px', color: '#A8B8D8' }}>Scan QR Code</h3>
-                  <p style={{ fontSize: '13px', color: '#A8B8D8', marginBottom: '16px' }}>Use your device camera to scan the certificate QR code</p>
-                  <button className="btn btn-outline w-full" style={{ marginTop: 'auto' }}>
-                    Start QR Scanner
-                  </button>
+
+                  {/* Default state - no scan active */}
+                  {scanMode === null && (
+                    <>
+                      <QrCode size={48} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
+                      <h3 style={{
+                        fontSize: '15px', fontWeight: '600',
+                        color: 'var(--text-primary)', margin: '0 0 8px'
+                      }}>
+                        Scan QR Code
+                      </h3>
+                      <p style={{
+                        fontSize: '13px', color: 'var(--text-secondary)',
+                        margin: '0 0 16px', lineHeight: '1.5'
+                      }}>
+                        Use your device camera or upload a certificate PDF
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <button
+                          onClick={startCamera}
+                          style={{
+                            width: '100%',
+                            height: '42px',
+                            border: '1.5px solid #1B3A6B',
+                            borderRadius: '8px',
+                            background: '#1B3A6B',
+                            color: '#FFFFFF',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#0F2044'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#1B3A6B'}
+                        >
+                          <Camera size={16} />
+                          Open Camera
+                        </button>
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          style={{
+                            width: '100%',
+                            height: '42px',
+                            border: '1.5px solid var(--border)',
+                            borderRadius: '8px',
+                            background: 'transparent',
+                            color: 'var(--text-primary)',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'var(--primary-light)';
+                            e.currentTarget.style.borderColor = '#1B3A6B';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.borderColor = 'var(--border)';
+                          }}
+                        >
+                          <Upload size={16} />
+                          Upload Certificate PDF
+                        </button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="application/pdf"
+                          onChange={handleQRFileUpload}
+                          style={{ display: 'none' }}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Camera active state */}
+                  {scanMode === 'camera' && (
+                    <>
+                      <div style={{ position: 'relative', marginBottom: '12px' }}>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          style={{
+                            width: '100%',
+                            height: '200px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            background: '#000'
+                          }}
+                        />
+                        {/* Scan overlay */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%', left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '120px', height: '120px',
+                          border: '2px solid #00C2E0',
+                          borderRadius: '8px',
+                          boxShadow: '0 0 0 9999px rgba(0,0,0,0.3)'
+                        }} />
+                      </div>
+                      <p style={{
+                        fontSize: '12px', color: 'var(--text-secondary)',
+                        margin: '0 0 12px'
+                      }}>
+                        Point camera at QR code
+                      </p>
+                      <button
+                        onClick={stopCamera}
+                        style={{
+                          width: '100%',
+                          height: '38px',
+                          border: '1.5px solid var(--invalid-text)',
+                          borderRadius: '8px',
+                          background: 'transparent',
+                          color: 'var(--invalid-text)',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--invalid-bg)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      >
+                        <X size={15} />
+                        Stop Camera
+                      </button>
+                    </>
+                  )}
+
+                  {/* File upload state */}
+                  {scanMode === 'file' && (
+                    <>
+                      {cameraError && (
+                        <div style={{
+                          background: 'var(--invalid-bg)',
+                          border: '1px solid var(--invalid-border)',
+                          borderRadius: '8px', padding: '10px 12px',
+                          marginBottom: '12px', fontSize: '12px',
+                          color: 'var(--invalid-text)', textAlign: 'left'
+                        }}>
+                          ⚠ {cameraError}
+                        </div>
+                      )}
+                      <QrCode size={40} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
+                      <p style={{
+                        fontSize: '13px', color: 'var(--text-secondary)',
+                        margin: '0 0 12px'
+                      }}>
+                        Upload a QR code image to verify
+                      </p>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          width: '100%',
+                          height: '42px',
+                          border: '1.5px solid #1B3A6B',
+                          borderRadius: '8px',
+                          background: '#1B3A6B',
+                          color: '#FFFFFF',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#0F2044'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = '#1B3A6B'}
+                      >
+                        <Upload size={16} />
+                        Choose Certificate PDF
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleQRFileUpload}
+                        style={{ display: 'none' }}
+                      />
+                      <button
+                        onClick={() => { setScanMode(null); setCameraError(''); }}
+                        style={{
+                          width: '100%',
+                          height: '36px',
+                          marginTop: '8px',
+                          border: 'none',
+                          background: 'transparent',
+                          color: 'var(--text-muted)',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          transition: 'opacity 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                      >
+                        <ArrowLeft size={14} />
+                        Back
+                      </button>
+                    </>
+                  )}
+
                 </div>
               </div>
 
@@ -304,9 +569,9 @@ const PublicPage = () => {
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div className="form-group">
                   <label className="form-label" style={{ fontWeight: '500', color: isDark ? '#A8B8D8' : '#0D1B3E' }}>Certificate Hash / ID</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     placeholder="Enter certificate hash or ID"
                     value={hashInput}
                     onChange={(e) => setHashInput(e.target.value)}
@@ -323,7 +588,7 @@ const PublicPage = () => {
                   />
                   <div className="text-muted text-xs" style={{ marginTop: '6px', color: isDark ? '#8899CC' : '#7A8BBF' }}>Try: CERT123456 (Valid) or CERT789012 (Revoked)</div>
                 </div>
-                
+
                 <button className="btn btn-primary w-full" style={{ marginTop: '12px' }} onClick={handleVerify}>
                   Verify Certificate
                 </button>

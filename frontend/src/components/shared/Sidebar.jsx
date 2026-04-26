@@ -35,6 +35,11 @@ const Sidebar = ({ role, isOpen, onClose }) => {
   const subtitle = role === 'admin' ? 'Admin Portal' : 'University Portal';
 
   return (
+    <>
+      <div
+        className={`sidebar-overlay ${isOpen ? 'open' : ''}`}
+        onClick={onClose}
+      />
     <div
       className={`sidebar ${isOpen ? 'open' : ''}`}
       style={{
@@ -186,6 +191,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

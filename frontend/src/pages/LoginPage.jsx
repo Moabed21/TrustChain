@@ -35,13 +35,13 @@ const LoginPage = () => {
   };
 
   return (
-    <div style={{
+    <div className="login-split" style={{
       display: 'flex',
       height: '100vh',
       overflow: 'hidden',
       background: isDark ? '#0A1628' : '#EEF2FF'
     }}>
-      <div style={{
+      <div className="login-left" style={{
         width: '40%',
         background: '#0D1B3E',
         display: 'flex',
@@ -142,7 +142,7 @@ const LoginPage = () => {
         ))}
       </div>
 
-      <div style={{
+      <div className="login-right" style={{
         width: '60%',
         background: isDark ? '#0F2044' : '#FFFFFF',
         display: 'flex',

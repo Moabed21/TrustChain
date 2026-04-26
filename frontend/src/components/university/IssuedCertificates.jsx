@@ -147,6 +147,7 @@ const IssuedCertificates = () => {
       )}
 
       <div className="card" style={{ overflowX: 'auto' }}>
+        <div className="table-wrapper">
         <table>
           <thead>
             <tr>
@@ -234,6 +235,7 @@ const IssuedCertificates = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <ConfirmModal 

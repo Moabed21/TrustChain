@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import Sidebar from '../components/shared/Sidebar';
 import Dashboard from '../components/university/Dashboard';
 import IssueCertificate from '../components/university/IssueCertificate';
@@ -11,23 +12,10 @@ const UniversityDashboard = () => {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-app)' }}>
       <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        style={{
-          display: 'none',
-          position: 'fixed',
-          top: '16px',
-          left: '16px',
-          zIndex: 200,
-          background: 'var(--primary)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '8px 10px',
-          cursor: 'pointer'
-        }}
         className="hamburger-btn"
+        onClick={() => setSidebarOpen(true)}
       >
-        ☰
+        <Menu size={20} />
       </button>
       <Sidebar role="university" isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main-content" style={{ flex: 1, marginLeft: 'var(--sidebar-w)', padding: '32px 48px' }}>
