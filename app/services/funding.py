@@ -1,5 +1,4 @@
 from app.config import Settings
-import models.university
 from web3 import Web3
 
 # we need the login , to import the just created wallet by the logged university
