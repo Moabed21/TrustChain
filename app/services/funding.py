@@ -9,25 +9,33 @@ def get_connection() -> Web3:
         raise ConnectionError("Can't connect to rpc")
     return w3
 async def fund(wallet_address:str) -> str:
-    #take small amount of our MONEY(polygon) to university wallet just created this function returns transaction id (str) 
+    #take small amount of our MONEY(polygon) to university wallet just created this function returns transaction id (str)
     w3 = get_connection()
-
     if not Web3.is_address(wallet_address) :
         raise ValueError("Invalid Wallet address")
     checksum_address= Web3.to_checksum_address(wallet_address)
+    #--------getting the funder (us) data ready--
     funder_wallet = w3.eth.account.from_key(Settings.ADMIN_PRIVATE_KEY)  
     gas_price = w3.eth.gas_price
     nonce = w3.eth.get_transaction_count(funder_wallet.address)
+    #--------data is ready-----------------------
+    #--------building the transaction structure--
     transaction = {
         "nonce" : nonce,
         "to" : checksum_address,
         "value" : Settings.FUNDING_AMOUNT,
-        "gas" : Settings.GAS, 
+        "gas" : Settings.GAS, #hardcoded from eth yellowpapar to encapsulate transaction fee required
         "chainId" : Settings.CHAIN_ID,
         "gasPrice" : gas_price,
     }
     signed_tx = w3.eth.account.sign_transaction(transaction,funder_wallet.key)
     tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
-    tx_hash_hex = tx_hash.hex()
-    print("succeeeeeeed")
-    return tx_hash_hex
+    print(f"transaction sent! Hash: {tx_hash.hex()}")
+    #to ensure the transaction is done
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    
+    if receipt.status == 1:
+        print("Success: Wallet funded!")
+    else:
+        raise Exception("Transaction failed on blockchain")
+    return tx_hash.hex()
