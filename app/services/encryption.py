@@ -16,7 +16,9 @@ _NONCE_SIZE = 12
 #we have at the end a blob starting nonce size of 12 bytes , at the end 16 bytes auth tag ,between them is the thing we want to encrypt (ciphertext)  => 12/ ciphertext / 16
 def _decrypt(data: str) -> bytes:
     key = _get_key()
-    blob = base64.urlsafe_b64decode(data.encode("utf-8"))
+    padded =data + "="*(4 - len(data)%4)
+    #base64url string must be padded to multiple of 4 chars urlsafe_b64encode removes padding we add it back before decoding
+    blob = base64.urlsafe_b64decode(padded.encode("utf-8"))
     #first blob[:_NONCE_SIZE] means extract first 12 bytes from the blob, the other blob[_NONCE_SIZE:] means extract the rest of the blob
     nonce, ciphertext = blob[:_NONCE_SIZE], blob[_NONCE_SIZE:]
     plaintext =  AESGCM(key).decrypt(nonce, ciphertext, None)
