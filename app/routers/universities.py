@@ -63,7 +63,7 @@ async def approve_application(id:str,current_user: dict=Depends(require_admin)):
         "country": application["country"],
         "email": application["email"],
         "hashed_password": application["hashed_password"],
-        "status": "Approved",
+        "status": "Active", #changed from approved to active to match the auth middleware
         "register_date": datetime.now(timezone.utc),
         "role":"university",
         "wallet_address":None,
