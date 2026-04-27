@@ -188,4 +188,35 @@ async def get_admin_address() -> str:
     contract = get_contract(w3)
 
     return contract.functions.getAdmin().call()
-    #return the admin address string that is set in the constructor of the smart contract    #common failure reasons: cert doesn't exist, caller isn't the issuer, already revoked
+    #return the admin address string that is set in the constructor of the smart contract
+
+async def verify_transaction_receipt(tx_hash_hex: str) -> dict:
+    #called by the /confirm endpoints after frontend signs it and send it to chain we have to verify it
+
+    w3 = get_web3()
+
+    try:
+        receipt = w3.eth.get_transaction_receipt(tx_hash_hex)
+        #fetch the receipt from the blockchain using the tx hash
+        #if the tx doesnt exist yet it will raise an exception
+    except Exception:
+        raise ValueError("Transaction not found on-chain either invalid hash or not mined yet")
+    #transaction not found so return error
+    if receipt.status == 0:
+        raise ValueError("Transaction was reverted on-chain (failed)")
+    #status 0 = the require() in the contract failed, the tx was rejected
+
+    contract_address = Web3.to_checksum_address(settings.CONTRACT_ADDRESS)
+    if receipt["to"].lower() != contract_address.lower():
+        raise ValueError("Transaction was not sent to the TrustChain contract")
+    #security check: make sure the tx was actually calling OUR contract
+ 
+    return {
+        "status": "confirmed",
+        #the tx was sent to the blockchain and succeeded
+        "from": receipt["from"],
+        #the wallet address that signed the tx
+        "block_number": receipt["blockNumber"],
+        "gas_used": receipt["gasUsed"],
+        #how much gas the tx actually consumed
+    }
