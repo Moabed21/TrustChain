@@ -15,8 +15,7 @@ class CertificateCreate(CertificateBase): #event happen when Certificate is crea
 class CertificateInDB(CertificateBase):   #what actually saved in mongodb
     id:Optional[str]=None #str because it is a mongodb id which is a string like "abc123"
     hashed_certificate:str
-    ipfs_cid:str
-    enc_cid:str
+    enc_cid:str 
     qr_code:str #stored in base 64
     status:str #pending -> issued -> revoked
     issue_date:datetime=datetime.now(timezone.utc) #must be in utc timezone added to avoid timezone issues added it in import
