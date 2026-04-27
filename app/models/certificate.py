@@ -18,8 +18,9 @@ class CertificateInDB(CertificateBase):   #what actually saved in mongodb
     ipfs_cid:str
     enc_cid:str
     qr_code:str #stored in base 64
-    status:str
+    status:str #pending -> issued -> revoked
     issue_date:datetime=datetime.now(timezone.utc) #must be in utc timezone added to avoid timezone issues added it in import
+    tx_hash:Optional[str] = None
 
 class CertificateResponse(CertificateBase):#return values of timestamp and if (for confirmation)
     hashed_certificate:str
