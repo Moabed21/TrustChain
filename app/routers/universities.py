@@ -7,6 +7,7 @@ from datetime import datetime, timezone #to handle date and time
 from app.routers.auth import hash_password
 from web3 import Web3
 from app.services.funding import fund
+from app.services.blockchain import register_university_on_chain
 from pydantic import BaseModel
 router = APIRouter()
 
@@ -111,8 +112,9 @@ class WalletRegistration(BaseModel):
 async def register_wallet(body:WalletRegistration , current_user: dict = Depends(require_university)):
 #this endpoint is called by frontend in the first login of the university to
 #1-validate the wallet address
-#2- save it in the db in the university document
+#2-save it in the db in the university document
 #3-send fees to the university wallet
+#4-register the university wallet on the smart contract so it can issue and revoke certs
     db = get_db()
     if current_user.get("wallet_address"):
         raise HTTPException(status_code=400, detail={"message":"Wallet address already registered"})
@@ -127,14 +129,35 @@ async def register_wallet(body:WalletRegistration , current_user: dict = Depends
     #check if the wallet is registered to any university
     await db.universities.update_one({"_id": ObjectId(current_user["_id"])}, {"$set": {"wallet_address": checksumed_address}})
     # set wallet address for the current user 
+    funded = False
+    funding_tx = None
     try:
-        tx_hash = await fund(checksumed_address)
+        funding_tx = await fund(checksumed_address)
+        funded = True
         #fund the uni wallet using funding service
     except Exception as e:
         print(f"Error in funding the uni wallet {checksumed_address}",e)
-        return {"message":"Wallet address registered successfully but funding failed","wallet_address": checksumed_address, "funded": False}
-        #if the funding fail but the wallet is set we raise error and dont remove the wallet so admin can fund it later manually    
-    return {"message":"Wallet address registered successfully and funded","wallet_address": checksumed_address, "funded": True,"funding_tx_hash":tx_hash}
-    #if the funding done successfully return message
+        #if funding fails wallet is still saved so admin can fund manually later
+
+    registered_on_chain = False
+    registration_tx = None
+    try:
+        registration_tx = await register_university_on_chain(checksumed_address)
+        registered_on_chain = True
+        #register the wallet on the smart contract so onlyUniversity modifier passes
+        #this is admin signed tx so admin pays gas not the university
+    except Exception as e:
+        print(f"Error registering university on chain {checksumed_address}",e)
+        #if on chain registration fails the wallet is still saved in mongodb
+        #admin can manually call registerUniversity later
+
+    return {
+        "message":"Wallet address registered successfully",
+        "wallet_address": checksumed_address,
+        "funded": funded,
+        "funding_tx_hash": funding_tx,
+        "registered_on_chain": registered_on_chain,
+        "registration_tx_hash": registration_tx
+    }
     
    
