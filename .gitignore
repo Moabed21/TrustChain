@@ -8,5 +8,4 @@ __pycache__/
 summary.md
 .venv/
 docs/TrustChain_Frontend_S10_Guide.md
-.gitignore
 docs/TrustChain_Wallet_Solutions.md
