@@ -71,6 +71,78 @@ async def register_university_on_chain(wallet_address: str) -> str:
     #return the tx hash to be saved in mongoDB
     
 
+async def issue_certificate_on_chain(
+    cert_hash_bytes: bytes,
+    encrypted_cid: str,
+    university_wallet: str,
+    university_private_key: str
+) -> str:
+    #to issue cert on the chain the uni builds the tx and sign by their private key and send it from there wallet address
+    w3 = get_web3()
+    contract = get_contract(w3)
+
+    checksummed = Web3.to_checksum_address(university_wallet)
+
+    nonce = w3.eth.get_transaction_count(checksummed)
+
+    tx = contract.functions.issueCertificate(
+        cert_hash_bytes,
+        encrypted_cid
+    ).build_transaction({
+        "from": checksummed,
+        "nonce": nonce,
+        "gas": 100000,
+        "gasPrice": w3.eth.gas_price,
+        "chainId": settings.CHAIN_ID
+    })
+
+    signed_tx = w3.eth.account.sign_transaction(tx, private_key=university_private_key)
+    #sign the transaction with the university's private key 
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+
+    if receipt.status == 0:
+        raise Exception(f"issueCertificate reverted on-chain: {tx_hash.hex()}")
+    #status 0 means the require() in the contract failed and return error with the hash of the transaction 
+
+    return tx_hash.hex()
+    #return tx hash as hex to be saved in mongodb
+
+async def revoke_certificate_on_chain(
+    cert_hash_bytes: bytes,
+    university_wallet: str,
+    university_private_key: str
+) -> str:
+    w3 = get_web3()
+    contract = get_contract(w3)
+
+    checksummed = Web3.to_checksum_address(university_wallet)
+
+    nonce = w3.eth.get_transaction_count(checksummed)
+
+    tx = contract.functions.revokeCertificate(cert_hash_bytes).build_transaction(
+        {
+        "from": checksummed,
+        "nonce": nonce,
+        "gas": 100000,
+        "gasPrice": w3.eth.gas_price,
+        "chainId": settings.CHAIN_ID
+    })
+
+    signed_tx = w3.eth.account.sign_transaction(tx, private_key=university_private_key)
+
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+    receipt = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+
+    if receipt.status == 0:
+        raise Exception(f"revokeCertificate reverted on-chain: {tx_hash.hex()}")
+        #error based on the require in the solidity code
+    return tx_hash.hex()
+    #return tx hash for audit trail in MongoDB
+
+
 async def verify_certificate_on_chain(cert_hash_hex: str) -> dict:
     #to verify certificate on chain with its hash it is free no gas fees required
     w3 = get_web3()
@@ -116,4 +188,4 @@ async def get_admin_address() -> str:
     contract = get_contract(w3)
 
     return contract.functions.getAdmin().call()
-    #return the admin address string that is set in the constructor of the smart contract
+    #return the admin address string that is set in the constructor of the smart contract    #common failure reasons: cert doesn't exist, caller isn't the issuer, already revoked
