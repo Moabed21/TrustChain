@@ -159,5 +159,17 @@ async def register_wallet(body:WalletRegistration , current_user: dict = Depends
         "registered_on_chain": registered_on_chain,
         "registration_tx_hash": registration_tx
     }
+#to be checked...
+@router.get("/all_universities")
+async def get_all_universities(
+    current_user: dict = Depends(require_admin),
+    db = Depends(get_db)
+):
+    universities_cursor = db.universities.find()
+    universities = await universities_cursor.to_list(length=None) 
     
-   
+    if not universities:
+        raise HTTPException(status_code=200, detail={"message":"No universities found"})
+    for university in universities:
+        university["id"] = str(university["_id"]) 
+    return universities
