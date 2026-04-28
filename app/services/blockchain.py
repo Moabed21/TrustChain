@@ -1,7 +1,6 @@
 import json                          # to load the ABI JSON file from disk
 from pathlib import Path             # to build the file path to the ABI file cleanly
 from web3 import Web3                # the main library for interacting with Ethereum/Polygon
-from web3.exceptions import ContractLogicError  # raised when a require() fails in the contract
 from app.config import settings     
 
 
