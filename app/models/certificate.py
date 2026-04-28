@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr #base model for bases (classes)
+from pydantic import BaseModel #base model for bases (classes)
  #connection , email str for email structure
 from typing import Optional #to make something optional
 from datetime import datetime, timezone #to handle date and time
