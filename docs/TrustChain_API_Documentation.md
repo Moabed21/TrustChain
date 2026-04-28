@@ -1,6 +1,6 @@
 # TrustChain — Full API Documentation
 ### Base URL: `http://127.0.0.1:8000`
-### Updated: March 30, 2026
+### Updated: April 28, 2026
 
 ---
 
@@ -18,9 +18,9 @@
 |--------|------|--------|-----------|--------|
 | Auth | `app/routers/auth.py` | `/api/auth` | 3 |  Done |
 | Universities | `app/routers/universities.py` | `/api/universities` | 7 |  Done |
-| Certificates | `app/routers/certificates.py` | `/api/certificates` | 5 |  Not Started |
-| Verify | `app/routers/verify.py` | `/api/verify` | 2 |  Not Started |
-| **Total** | | | **17** | |
+| Certificates | `app/routers/certificates.py` | `/api/certificates` | 6 |  Done |
+| Verify | `app/routers/verify.py` | `/api/verify` | 3 |  Done |
+| **Total** | | | **19** | |
 
 ---
 
@@ -580,39 +580,32 @@ URL:
 # 3. Certificates Router
 ### File: `app/routers/certificates.py`
 ### Prefix: `/api/certificates`
-### Status:  Not Started (Planned: Session 13-15, Apr 20-24)
+### Status:  Done
 
 ---
 
 ## POST `/api/certificates`
-### Status:  Not Started
+### Status:  Done
 
 **Purpose:**
-Issues a new certificate for a student. Most complex endpoint in the system.
+Prepares a new certificate for a student. Returns data for frontend to sign on-chain.
 
 **Access:** University only (must be Active and have wallet connected)
 
 **Internal Flow:**
 ```
-1.  Verify JWT token → is this a university?
-2.  Check university status → must be "Active"
-3.  Validate all input fields
-4.  Hash certificate data using SHA-256
-    Input: student_name + major + graduation_date + university_id
-    Output: unique certificate fingerprint
-5.  Check db.certificates for duplicate hash
-    → if exists → return 400 (already issued)
-6.  Encrypt PDF using AES-256
-7.  Upload encrypted PDF to IPFS via Pinata
-    Output: CID (content identifier)
-8.  Encrypt the CID using AES-256
-9.  Write to Polygon blockchain:
-    issueCertificate(certificate_hash, encrypted_cid)
-    University wallet signs the transaction
-10. Generate QR code containing encrypted CID
-11. Save to db.certificates
-12. Increment university certificates_issued counter
-13. Return QR code + certificate details
+1. Verify JWT token → is this a university?
+2. Check university status → must be "Active"
+3. Validate wallet is registered on-chain
+4. Hash certificate data using SHA-256
+5. Check db.certificates for duplicate hash
+   → if exists → return 400 (already issued)
+6. Encrypt PDF using AES-256-GCM
+7. Upload encrypted PDF to IPFS via Pinata
+8. Encrypt the CID using AES-256-GCM
+9. Generate QR code containing encrypted CID
+10. Save to db.certificates with status "Pending"
+11. Return QR code + certificate details for signing
 ```
 
 **Request:**
@@ -625,34 +618,61 @@ Body:
   student_name: string
   major: string
   graduation_date: string
-  file: PDF file (the certificate)
+  pdf: PDF file (the certificate)
 ```
 
 **Response:**
 ```json
 {
-  "id": "64abc123",
-  "certificate_hash": "a3f8c2d1e9b7...",
-  "qr_code": "base64_encoded_qr_image",
-  "status": "valid",
-  "issue_date": "2026-04-20T10:00:00.000Z",
-  "message": "Certificate issued successfully"
+  "message": "Certificate prepared sign the transaction onchain to complete issuance",
+  "certificate_id": "64abc123",
+  "cert_hash_bytes": "0xa3f8c2d1e9b7...",
+  "encrypted_cid": "U2FsdGVkX1...",
+  "qr_code": "base64_encoded_qr_image"
 }
 ```
 
-**Error Responses:**
-| Code | Reason |
-|------|--------|
-| 401 | Token missing or invalid |
-| 403 | Not a university |
-| 403 | University not active |
-| 400 | Certificate already issued (duplicate hash) |
-| 400 | Wallet not connected |
+---
+
+## POST `/api/certificates/{certificate_id}/confirm`
+### Status:  Done
+
+**Purpose:**
+Confirms issuance after frontend signs transaction on blockchain. Updates status to Issued.
+
+**Access:** University only
+
+**Internal Flow:**
+```
+1. Verify JWT token
+2. Find certificate by id, ensure status is "Pending"
+3. Verify transaction receipt on-chain using tx_hash
+4. Validate tx was signed by university's wallet
+5. Update certificate status to "Issued", record tx_hash
+6. Increment university total_certificates
+```
+
+**Request:**
+```json
+{
+  "tx_hash": "0x123abc..."
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Certificate issued successfully and recorded on blockchain",
+  "certificate_id": "64abc123",
+  "tx_hash": "0x123abc...",
+  "status": "Issued"
+}
+```
 
 ---
 
 ## GET `/api/certificates`
-### Status:  Not Started
+### Status:  Done
 
 **Purpose:**
 Returns all certificates issued by the currently logged in university.
@@ -661,16 +681,9 @@ Returns all certificates issued by the currently logged in university.
 
 **Internal Flow:**
 ```
-1. Verify JWT token → get university_id
-2. Search db.certificates where university_id matches
-3. Convert _id fields to strings
-4. Return list of certificates
-```
-
-**Request:**
-```
-Headers:
-  Authorization: Bearer <university_access_token>
+1. Verify JWT token
+2. Search db.certificates where university_id matches (limit 100)
+3. Return list of certificates
 ```
 
 **Response:**
@@ -681,10 +694,8 @@ Headers:
     "student_name": "Ahmed Ali",
     "major": "Computer Science",
     "graduation_date": "2026-06-01",
-    "certificate_hash": "a3f8c2d1...",
-    "status": "valid",
-    "issue_date": "2026-04-20T10:00:00.000Z",
-    "qr_code": "base64..."
+    "status": "Issued",
+    "issue_date": "2026-04-20T10:00:00.000Z"
   }
 ]
 ```
@@ -692,31 +703,12 @@ Headers:
 ---
 
 ## GET `/api/certificates/{id}`
-### Status:  Not Started
+### Status:  Done
 
 **Purpose:**
 Returns full details of a specific certificate.
 
 **Access:** University only (must be the university that issued it)
-
-**Internal Flow:**
-```
-1. Verify JWT token → get university_id
-2. Find certificate in db.certificates by id
-   → if not found → return 404
-3. Check certificate belongs to this university
-   → if not → return 403
-4. Return certificate details
-```
-
-**Request:**
-```
-Headers:
-  Authorization: Bearer <university_access_token>
-
-URL:
-  GET /api/certificates/64abc123def456789012
-```
 
 **Response:**
 ```json
@@ -726,234 +718,175 @@ URL:
   "major": "Computer Science",
   "graduation_date": "2026-06-01",
   "university_id": "64xyz789",
-  "certificate_hash": "a3f8c2d1...",
-  "ipfs_cid": "QmX7y8z9...",
-  "status": "valid",
+  "hashed_certificate": "a3f8c2d1...",
+  "enc_cid": "U2FsdGVkX1...",
+  "status": "Issued",
   "issue_date": "2026-04-20T10:00:00.000Z",
-  "qr_code": "base64..."
+  "tx_hash": "0x123abc..."
 }
 ```
 
 ---
 
 ## PUT `/api/certificates/{id}/revoke`
-### Status:  Not Started
+### Status:  Done
 
 **Purpose:**
-Revokes a certificate. Marks it as revoked on the blockchain and in MongoDB. PDF stays on IPFS but verification will fail.
+Initiates revocation of a certificate. Marks it as PendingRevocation.
 
 **Access:** University only (must be the university that issued it)
 
 **Internal Flow:**
 ```
-1. Verify JWT token → get university_id
-2. Find certificate in db.certificates by id
-   → if not found → return 404
-3. Check certificate belongs to this university
-   → if not → return 403
-4. Check certificate is not already revoked
-   → if revoked → return 400
-5. Call smart contract:
-   revokeCertificate(certificate_hash)
-6. Update db.certificates status to "revoked"
-7. Return success message
-```
-
-**Request:**
-```
-Headers:
-  Authorization: Bearer <university_access_token>
-
-URL:
-  PUT /api/certificates/64abc123def456789012/revoke
+1. Verify JWT token and wallet registration
+2. Find certificate, ensure status is "Issued"
+3. Update status to "PendingRevocation"
+4. Return hash bytes for frontend to call revokeCertificate on-chain
 ```
 
 **Response:**
 ```json
 {
-  "message": "Certificate revoked successfully"
+  "message": "Certificate marked for revocation — sign the transaction on chain to complete",
+  "certificate_id": "64abc123",
+  "cert_hash_bytes": "0xa3f8c2d1..."
 }
 ```
 
-**Error Responses:**
-| Code | Reason |
-|------|--------|
-| 401 | Token missing or invalid |
-| 403 | Not a university |
-| 403 | Certificate belongs to another university |
-| 404 | Certificate not found |
-| 400 | Certificate already revoked |
-
 ---
 
-## GET `/api/certificates/{id}/download`
-### Status:  Not Started
+## POST `/api/certificates/{id}/revoke/confirm`
+### Status:  Done
 
 **Purpose:**
-Downloads the original PDF certificate by fetching it from IPFS and decrypting it.
+Confirms revocation after frontend signs transaction on blockchain.
 
-**Access:** University only (must be the university that issued it)
+**Access:** University only
 
 **Internal Flow:**
 ```
-1. Verify JWT token → get university_id
-2. Find certificate in db.certificates
-3. Check certificate belongs to this university
-4. Get ipfs_cid from certificate document
-5. Fetch encrypted PDF from IPFS using CID
-6. Decrypt PDF using AES-256
-7. Return PDF file as download
+1. Verify JWT token
+2. Find certificate, ensure status is "PendingRevocation"
+3. Verify transaction receipt on-chain
+4. Update status to "Revoked"
 ```
 
 **Request:**
-```
-Headers:
-  Authorization: Bearer <university_access_token>
-
-URL:
-  GET /api/certificates/64abc123def456789012/download
+```json
+{
+  "tx_hash": "0x456def..."
+}
 ```
 
 **Response:**
+```json
+{
+  "message": "Certificate revoked successfully",
+  "certificate_id": "64abc123",
+  "tx_hash": "0x456def...",
+  "status": "Revoked"
+}
 ```
-Content-Type: application/pdf
-File: decrypted PDF bytes
-```
+
 
 ---
 
 # 4. Verify Router
 ### File: `app/routers/verify.py`
 ### Prefix: `/api/verify`
-### Status:  Not Started (Planned: Session 16-18, Apr 27 - May 1)
+### Status:  Done
 
 ---
 
-## POST `/api/verify`
-### Status:  Not Started
+## GET `/api/verify`
+### Status:  Done
 
 **Purpose:**
-Verifies a certificate by its hash. Used when someone has the certificate hash directly.
+Health check for verify router.
+
+**Access:** Public
+
+**Response:**
+```json
+{
+  "message": "verify router is working"
+}
+```
+
+---
+
+## POST `/api/verify/file`
+### Status:  Done
+
+**Purpose:**
+Verifies a certificate by uploading the PDF file directly.
 
 **Access:** Public — no token required
 
-**Who Uses It:**
-- Employers or institutions verifying a certificate hash
-
 **Internal Flow:**
 ```
-1. Receive certificate_hash from request
-2. Query Polygon blockchain:
-   verifyCertificate(certificate_hash)
-3. Blockchain returns:
-   - exists: true/false
-   - status: "valid" or "revoked"
-   - issuer_wallet
-   - timestamp
-4. If not exists → return invalid
-5. If revoked → return revoked
-6. If valid → fetch details from db.certificates
-7. Return full result
+1. Read uploaded PDF bytes
+2. Hash PDF using SHA-256
+3. Query Polygon blockchain: verifyCertificate(cert_hash)
+4. Return verification metadata (status, issuer, timestamp)
 ```
 
 **Request:**
-```json
-{
-  "certificate_hash": "a3f8c2d1e9b7..."
-}
+```
+Content-Type: multipart/form-data
+Body:
+  pdf: PDF file
 ```
 
 **Response - Valid:**
 ```json
 {
+  "certificate_hash": "a3f8c2d1...",
   "status": "valid",
-  "student_name": "Ahmed Ali",
-  "major": "Computer Science",
-  "graduation_date": "2026-06-01",
-  "university_name": "University of Jordan",
-  "issue_date": "2026-04-20T10:00:00.000Z"
-}
-```
-
-**Response - Revoked:**
-```json
-{
-  "status": "revoked",
-  "message": "This certificate has been revoked by the issuing university"
-}
-```
-
-**Response - Invalid:**
-```json
-{
-  "status": "invalid",
-  "message": "This certificate does not exist on the blockchain"
+  "issuer": "0x742d35...",
+  "timestamp": 1714318000
 }
 ```
 
 ---
 
 ## POST `/api/verify/qr`
-### Status:  Not Started
+### Status:  Done
 
 **Purpose:**
-Verifies a certificate by scanning its QR code. Main verification method for employers.
+Verifies a certificate by scanning its QR code image.
 
 **Access:** Public — no token required
 
-**Who Uses It:**
-- Employers scanning QR code on a physical or digital certificate
-
 **Internal Flow:**
 ```
-1. Receive encrypted_cid from QR code scan
-2. Decrypt the encrypted_cid using AES-256
-   Output: real IPFS CID
-3. Fetch encrypted PDF from IPFS using CID
-4. Decrypt the PDF using AES-256
-5. Hash the certificate data using SHA-256
-6. Query Polygon blockchain with the hash:
-   verifyCertificate(certificate_hash)
-7. Blockchain returns status
-8. If not exists → return invalid
-9. If revoked → return revoked
-10. If valid → return certificate details
+1. Receive QR code image file
+2. Decode QR code to extract encrypted_cid
+3. Decrypt CID using AES-256
+4. Fetch encrypted PDF from IPFS
+5. Decrypt PDF using AES-256
+6. Hash PDF using SHA-256
+7. Query Polygon blockchain with the hash
+8. Return verification metadata
 ```
 
 **Request:**
-```json
-{
-  "encrypted_cid": "U2FsdGVkX1+abc123..."
-}
+```
+Content-Type: multipart/form-data
+Body:
+  qr_image: Image file (PNG/JPG)
 ```
 
 **Response - Valid:**
 ```json
 {
+  "certificate_hash": "a3f8c2d1...",
   "status": "valid",
-  "student_name": "Ahmed Ali",
-  "major": "Computer Science",
-  "graduation_date": "2026-06-01",
-  "university_name": "University of Jordan",
-  "issue_date": "2026-04-20T10:00:00.000Z"
+  "issuer": "0x742d35...",
+  "timestamp": 1714318000
 }
 ```
 
-**Response - Revoked:**
-```json
-{
-  "status": "revoked",
-  "message": "This certificate has been revoked by the issuing university"
-}
-```
-
-**Response - Invalid/Tampered:**
-```json
-{
-  "status": "invalid",
-  "message": "This certificate does not exist or has been tampered with"
-}
-```
 
 ---
 
@@ -970,7 +903,7 @@ Verifies a certificate by scanning its QR code. Main verification method for emp
 ---
 
 # Services
-### Status:  Not Started (Planned: Week 4, Apr 13-17)
+### Status:  Done
 
 | Service | File | Purpose | Planned |
 |---------|------|---------|---------|
@@ -984,7 +917,7 @@ Verifies a certificate by scanning its QR code. Main verification method for emp
 
 # Smart Contract
 ### File: `contracts/TrustChain.sol`
-### Status:  Not Started (Planned: Week 3, Apr 6-10)
+### Status:  Done
 
 | Function | Purpose | Access |
 |----------|---------|--------|
@@ -1009,13 +942,16 @@ Verifies a certificate by scanning its QR code. Main verification method for emp
 | 8 | GET `/api/universities/{id}` | universities.py | Admin |  Done |
 | 9 | PUT `/api/universities/{id}/suspend` | universities.py | Admin |  Done |
 | 10 | PUT `/api/universities/{id}/reactivate` | universities.py | Admin |  Done |
-| 11 | POST `/api/certificates` | certificates.py | University |  Not Started |
-| 12 | GET `/api/certificates` | certificates.py | University |  Not Started |
-| 13 | GET `/api/certificates/{id}` | certificates.py | University |  Not Started |
-| 14 | PUT `/api/certificates/{id}/revoke` | certificates.py | University |  Not Started |
-| 15 | GET `/api/certificates/{id}/download` | certificates.py | University |  Not Started |
-| 16 | POST `/api/verify` | verify.py | Public |  Not Started |
-| 17 | POST `/api/verify/qr` | verify.py | Public |  Not Started |
+| 11 | POST `/api/certificates` | certificates.py | University |  Done |
+| 12 | POST `/api/certificates/{id}/confirm` | certificates.py | University |  Done |
+| 13 | GET `/api/certificates` | certificates.py | University |  Done |
+| 14 | GET `/api/certificates/{id}` | certificates.py | University |  Done |
+| 15 | PUT `/api/certificates/{id}/revoke` | certificates.py | University |  Done |
+| 16 | POST `/api/certificates/{id}/revoke/confirm` | certificates.py | University |  Done |
+| 17 | GET `/api/verify` | verify.py | Public |  Done |
+| 18 | POST `/api/verify/file` | verify.py | Public |  Done |
+| 19 | POST `/api/verify/qr` | verify.py | Public |  Done |
+
 
 ---
 
