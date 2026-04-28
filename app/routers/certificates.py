@@ -8,7 +8,7 @@ from app.services.hashing import hash_pdf
 from app.services.encryption import encrypt_pdf, encrypt_cid
 from app.services.ipfs import upload_to_ipfs
 from app.services.qr import generate_qr
-from app.services.blockchain import verify_transaction_receipt
+from app.services.blockchain import verify_transaction_receipt, is_university_registered
 
 router = APIRouter()
 
@@ -34,6 +34,11 @@ async def create_certificate(
     if not current_user.get("wallet_address"):
         raise HTTPException(status_code=400, detail="Wallet address not registered — connect wallet first")
     #check if the university has a wallet address to sign the certificate
+
+    if not await is_university_registered(current_user["wallet_address"]):
+        raise HTTPException(status_code=403, detail="University wallet is not registered on the blockchain — contact admin")
+    #verify the wallet is actually whitelisted on-chain
+    #catches edge case where wallet was saved to MongoDB but on-chain registration failed
 
     pdf_bytes = await pdf.read()
     #await is used because uploadfile.read() method is async to read the uploaded file into memory
@@ -184,6 +189,10 @@ async def revoke_certificate(
     if certificate["status"] != "Issued":
         raise HTTPException(status_code=400, detail=f"Cannot revoke — certificate status is {certificate['status']}")
     #can only revoke issued certs
+
+    if not await is_university_registered(current_user["wallet_address"]):
+        raise HTTPException(status_code=403, detail="University wallet is not registered on the blockchain — contact admin")
+    #same on-chain check before revocation
 
     await db.certificates.update_one(
         {"_id": ObjectId(certificate_id)},
