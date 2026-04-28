@@ -12,7 +12,7 @@ class UserCreate(UserBase):#event happen when user is created ,adding password
 
 class UserInDB(UserBase):#what actually saved in mongodb
     id:Optional[str]=None #str because it is a mongodb id which is a string like "abc123"
-    hashedpass:str
+    hashed_password:str
     create_date:datetime=datetime.now(timezone.utc) #must be in utc timezone added to avoid timezone issues added it in import
 
 class UserResponse(UserBase):#return values of timestamp and if (for confirmation)
