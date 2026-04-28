@@ -92,7 +92,7 @@ async def verify_by_qr(qr_image: UploadFile = File(...)):
     #if the PDF on IPFS is untampered, this hash will match what was recorded on the blockchain
 
     try:
-        result = verify_certificate_on_chain(cert_hash)
+        result = await verify_certificate_on_chain(cert_hash) #same as line 29
         #check the hash against the smart contract free view call
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Blockchain verification failed: {str(e)}")
