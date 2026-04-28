@@ -1,7 +1,7 @@
 from bson import ObjectId
 from fastapi import APIRouter,Depends, HTTPException
 from app.database import get_db
-from app.models.university import UniversityCreate,UniversityResponse
+from app.models.university import UniversityCreate
 from app.middleware.auth_middleware import require_university,require_admin
 from datetime import datetime, timezone #to handle date and time
 from app.routers.auth import hash_password
