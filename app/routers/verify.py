@@ -26,7 +26,7 @@ async def verify_by_file(pdf: UploadFile = File(...)):
     cert_hash = hash_pdf(pdf_bytes)
     #convert cert to hash to verify it
     try:
-        result = verify_certificate_on_chain(cert_hash)
+        result = await verify_certificate_on_chain(cert_hash) #add await to prevent error
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Blockchain verification failed: {str(e)}")
 
