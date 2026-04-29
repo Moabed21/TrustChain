@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, QrCode, CheckCircle2, XCircle, AlertCircle, Camera, Upload, X, ArrowLeft } from 'lucide-react';
+import { QrCode, CheckCircle2, XCircle, AlertCircle, Camera, Upload, X, ArrowLeft } from 'lucide-react';
 import { mockCertificates } from '../data/mockData';
-import StatusBadge from '../components/shared/StatusBadge';
 import logo from '../assets/logo.png';
 import heroVideo from '../assets/land.mp4';
 import ThemeToggle from '../components/shared/ThemeToggle';

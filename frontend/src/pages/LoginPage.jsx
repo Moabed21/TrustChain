@@ -5,7 +5,6 @@ import { useTheme } from '../context/ThemeContext';
 import { ArrowLeft } from 'lucide-react';
 import logo from '../assets/logo.png';
 import ThemeToggle from '../components/shared/ThemeToggle';
-import { mockUsers } from '../data/mockData';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -21,10 +20,9 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
 
-    const user = mockUsers[email];
-    if (user && user.password === password) {
-      login(email, password, user.role);
-      if (user.role === 'admin') {
+    const userRole = login(email, password);
+    if (userRole) {
+      if (userRole === 'admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/university/dashboard');

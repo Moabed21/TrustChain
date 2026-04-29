@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, CheckCircle2, XCircle, CalendarDays, PlusCircle, LayoutList, FileText } from 'lucide-react';
+import { Award, CheckCircle2, XCircle, CalendarDays, PlusCircle, LayoutList } from 'lucide-react';
 import { mockIssuedCertificates } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 import StatusBadge from '../shared/StatusBadge';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Make sure dynamically generated dates format exactly as requested: "Monday, March 24, 2026"
   const todayFormatted = new Date().toLocaleDateString('en-US', {
@@ -44,7 +46,7 @@ const Dashboard = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-primary)' }}>Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Welcome back, Stanford University</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Welcome back, {user?.name || 'University'}</p>
         </div>
         <div className="page-date">{todayFormatted}</div>
       </div>

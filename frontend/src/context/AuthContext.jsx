@@ -13,14 +13,14 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
 
-  const login = (email, password, roleType) => {
+  const login = (email, password) => {
     const foundUser = mockUsers[email];
-    if (foundUser && foundUser.password === password && foundUser.role === roleType) {
+    if (foundUser && foundUser.password === password) {
       setUser(foundUser);
       setRole(foundUser.role);
-      return true;
+      return foundUser.role; // return role so caller can navigate
     }
-    return false;
+    return null;
   };
 
   const logout = () => {
