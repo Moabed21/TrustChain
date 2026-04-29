@@ -102,13 +102,13 @@ const IssuedCertificates = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#EEF2FF',
-          border: '1px solid #C8D0E8',
+          background: 'var(--primary-light)',
+          border: '1px solid var(--border)',
           borderRadius: '8px',
           padding: '12px 16px',
           marginBottom: '12px'
         }}>
-          <span style={{ fontSize: '14px', color: '#0D1B3E', fontWeight: '500' }}>
+          <span style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: '500' }}>
             {selectedIds.length} certificate(s) selected
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -116,11 +116,11 @@ const IssuedCertificates = () => {
               onClick={() => setSelectedIds([])}
               style={{
                 background: 'transparent',
-                border: '1px solid #C8D0E8',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 padding: '6px 14px',
                 fontSize: '13px',
-                color: '#64748B',
+                color: 'var(--text-secondary)',
                 cursor: 'pointer'
               }}>
               Clear Selection
@@ -128,12 +128,12 @@ const IssuedCertificates = () => {
             <button
               onClick={() => setShowBulkConfirm(true)}
               style={{
-                background: '#DC2626',
+                background: 'var(--danger)',
                 border: 'none',
                 borderRadius: '6px',
                 padding: '6px 14px',
                 fontSize: '13px',
-                color: '#FFFFFF',
+                color: 'var(--sidebar-text-active)',
                 fontWeight: '500',
                 cursor: 'pointer',
                 display: 'flex',
@@ -203,7 +203,7 @@ const IssuedCertificates = () => {
                         style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                       />
                     ) : (
-                      <span style={{ color: '#CBD5E1', fontSize: '12px' }}>—</span>
+                      <span style={{ color: 'var(--separator-muted)', fontSize: '12px' }}>—</span>
                     )}
                   </td>
                   <td className="font-medium">{cert.studentName}</td>

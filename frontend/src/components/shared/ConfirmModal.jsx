@@ -73,7 +73,7 @@ const ConfirmModal = ({
             onClick={onConfirm}
             style={
               confirmVariant === "red"
-                ? { backgroundColor: "#DC2626", color: "white", border: "none" }
+                ? { backgroundColor: "var(--danger)", color: "white", border: "none" }
                 : {}
             }
           >

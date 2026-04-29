@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 
 // Pages
 import PublicPage from './pages/PublicPage';
@@ -26,43 +27,45 @@ const RoleRoute = ({ children, allowedRole }) => {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<PublicPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          
-          {/* Admin Routes */}
-          <Route 
-            path="/admin/*" 
-            element={
-              <ProtectedRoute>
-                <RoleRoute allowedRole="admin">
-                  <AdminDashboard />
-                </RoleRoute>
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* University Routes */}
-          <Route 
-            path="/university/*" 
-            element={
-              <ProtectedRoute>
-                <RoleRoute allowedRole="university">
-                  <UniversityDashboard />
-                </RoleRoute>
-              </ProtectedRoute>
-            } 
-          />
+      <ErrorBoundary>
+        <AuthProvider>
+          <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<PublicPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            
+            {/* Admin Routes */}
+            <Route 
+              path="/admin/*" 
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRole="admin">
+                    <AdminDashboard />
+                  </RoleRoute>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* University Routes */}
+            <Route 
+              path="/university/*" 
+              element={
+                <ProtectedRoute>
+                  <RoleRoute allowedRole="university">
+                    <UniversityDashboard />
+                  </RoleRoute>
+                </ProtectedRoute>
+              } 
+            />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-      </AuthProvider>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+        </AuthProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

@@ -27,6 +27,8 @@ import {
   mockPendingApplications,
   mockRegisteredUniversities,
   mockIssuedCertificates,
+  mockMonthlyData,
+  mockActivityLog,
 } from "../../data/mockData";
 
 const Dashboard = () => {
@@ -53,65 +55,18 @@ const Dashboard = () => {
 
   const COLORS = ["#16A34A", "#DC2626"];
 
-  const monthlyData = [
-    { month: "Jan", certificates: 45 },
-    { month: "Feb", certificates: 62 },
-    { month: "Mar", certificates: 38 },
-    { month: "Apr", certificates: 89 },
-    { month: "May", certificates: 124 },
-    { month: "Jun", certificates: 97 },
-    { month: "Jul", certificates: 143 },
-    { month: "Aug", certificates: 112 },
-  ];
-
-  const recentActivity = [
-    {
-      id: 1,
-      action: "approved",
-      target: "Harvard University",
-      date: "2024-01-10",
-      type: "university",
-    },
-    {
-      id: 2,
-      action: "rejected",
-      target: "MIT Extension",
-      date: "2024-01-09",
-      type: "university",
-    },
-    {
-      id: 3,
-      action: "suspended",
-      target: "Cambridge University",
-      date: "2024-01-08",
-      type: "university",
-    },
-    {
-      id: 4,
-      action: "revoked",
-      target: "CERT789012",
-      date: "2024-01-07",
-      type: "certificate",
-    },
-    {
-      id: 5,
-      action: "approved",
-      target: "Stanford University",
-      date: "2024-01-06",
-      type: "university",
-    },
-  ];
+  const recentActivity = mockActivityLog.slice(0, 5);
 
   const getActionIcon = (action) => {
     switch (action) {
       case "approved":
-        return <CheckCircle2 size={16} color="#16A34A" />;
+        return <CheckCircle2 size={16} color="var(--success)" />;
       case "rejected":
-        return <XCircle size={16} color="#DC2626" />;
+        return <XCircle size={16} color="var(--danger)" />;
       case "suspended":
-        return <Ban size={16} color="#D97706" />;
+        return <Ban size={16} color="var(--warning)" />;
       case "revoked":
-        return <AlertCircle size={16} color="#D97706" />;
+        return <AlertCircle size={16} color="var(--warning)" />;
       default:
         return null;
     }
@@ -134,7 +89,7 @@ const Dashboard = () => {
         <div>
           <h2 style={{ fontSize: "24px", marginBottom: "8px" }}>Dashboard</h2>
           <p style={{ color: "var(--text-secondary)" }}>
-            Welcome back, {user?.name || 'Admin'}
+            Welcome back, {user?.name || "Admin"}
           </p>
         </div>
         <div style={{ color: "var(--text-muted)", fontSize: "14px" }}>
@@ -201,10 +156,10 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: "#FEE2E2" }}>
-              <Ban color="#DC2626" size={20} />
+            <div className="stat-icon" style={{ backgroundColor: "var(--invalid-badge-bg)" }}>
+              <Ban color="var(--danger)" size={20} />
             </div>
-            <span className="stat-trend" style={{ color: "#DC2626" }}>
+            <span className="stat-trend" style={{ color: "var(--danger)" }}>
               Access restricted
             </span>
           </div>
@@ -238,7 +193,7 @@ const Dashboard = () => {
             Certificates Issued per Month
           </h3>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={monthlyData}>
+            <LineChart data={mockMonthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="month"
@@ -312,6 +267,7 @@ const Dashboard = () => {
               Recent Activity
             </h3>
             <span
+              onClick={() => navigate("/admin/activity")}
               style={{
                 color: "var(--accent)",
                 fontSize: "13px",
@@ -391,7 +347,7 @@ const Dashboard = () => {
                   display: "flex",
                   alignItems: "center",
                   padding: "12px 16px",
-                  backgroundColor: "#1B3A6B",
+                  backgroundColor: "var(--primary)",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
@@ -409,7 +365,7 @@ const Dashboard = () => {
                 {mockPendingApplications.length > 0 && (
                   <span
                     style={{
-                      background: "#DC2626",
+                      background: "var(--danger)",
                       color: "white",
                       borderRadius: "999px",
                       fontSize: "11px",
@@ -471,15 +427,15 @@ const Dashboard = () => {
                   display: "flex",
                   gap: "10px",
                   padding: "10px",
-                  background: "#FEF3C7",
+                  background: "var(--revoked-bg)",
                   borderRadius: "8px",
-                  border: "1px solid #FDE68A",
+                  border: "1px solid var(--revoked-border)",
                   marginBottom: "8px",
                 }}
               >
                 <AlertCircle
                   size={16}
-                  color="#D97706"
+                  color="var(--warning)"
                   style={{ flexShrink: 0, marginTop: 2 }}
                 />
                 <div>
@@ -487,12 +443,14 @@ const Dashboard = () => {
                     style={{
                       fontSize: "13px",
                       fontWeight: "500",
-                      color: "#92400E",
+                      color: "var(--revoked-text)",
                     }}
                   >
                     {mockPendingApplications.length} Applications Pending
                   </div>
-                  <div style={{ fontSize: "12px", color: "#B45309" }}>
+                  <div
+                    style={{ fontSize: "12px", color: "var(--warning-hover)" }}
+                  >
                     Review and approve university registrations
                   </div>
                 </div>
@@ -505,15 +463,15 @@ const Dashboard = () => {
                   display: "flex",
                   gap: "10px",
                   padding: "10px",
-                  background: "#FFF1F2",
+                  background: "var(--invalid-bg)",
                   borderRadius: "8px",
-                  border: "1px solid #FECDD3",
+                  border: "1px solid var(--invalid-border)",
                   marginBottom: "8px",
                 }}
               >
                 <Ban
                   size={16}
-                  color="#DC2626"
+                  color="var(--danger)"
                   style={{ flexShrink: 0, marginTop: 2 }}
                 />
                 <div>
@@ -521,12 +479,14 @@ const Dashboard = () => {
                     style={{
                       fontSize: "13px",
                       fontWeight: "500",
-                      color: "#991B1B",
+                      color: "var(--invalid-text)",
                     }}
                   >
                     {suspendedUniversitiesCount} Universities Suspended
                   </div>
-                  <div style={{ fontSize: "12px", color: "#B91C1C" }}>
+                  <div
+                    style={{ fontSize: "12px", color: "var(--danger-hover)" }}
+                  >
                     Some universities have restricted access
                   </div>
                 </div>
@@ -538,14 +498,14 @@ const Dashboard = () => {
                 display: "flex",
                 gap: "10px",
                 padding: "10px",
-                background: "#F0FDF4",
+                background: "var(--valid-bg)",
                 borderRadius: "8px",
-                border: "1px solid #BBF7D0",
+                border: "1px solid var(--valid-border)",
               }}
             >
               <CheckCircle2
                 size={16}
-                color="#16A34A"
+                color="var(--success)"
                 style={{ flexShrink: 0, marginTop: 2 }}
               />
               <div>
@@ -553,12 +513,12 @@ const Dashboard = () => {
                   style={{
                     fontSize: "13px",
                     fontWeight: "500",
-                    color: "#166534",
+                    color: "var(--valid-text)",
                   }}
                 >
                   System Operational
                 </div>
-                <div style={{ fontSize: "12px", color: "#16A34A" }}>
+                <div style={{ fontSize: "12px", color: "var(--success)" }}>
                   All blockchain services running normally
                 </div>
               </div>

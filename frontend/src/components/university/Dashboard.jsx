@@ -50,7 +50,7 @@ const Dashboard = () => {
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#EAF0F8', color: '#1B3A6B' }}>
+            <div className="stat-icon" style={{ backgroundColor: 'var(--stat-icon-blue-bg)', color: 'var(--stat-icon-blue-text)' }}>
               <Award size={24} />
             </div>
             <span className="stat-trend">All time</span>
@@ -61,7 +61,7 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#DCFCE7', color: '#16A34A' }}>
+            <div className="stat-icon" style={{ backgroundColor: 'var(--valid-badge-bg)', color: 'var(--success)' }}>
               <CheckCircle2 size={24} />
             </div>
             <span className="stat-trend">{validPercentage}% of total</span>
@@ -72,7 +72,7 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}>
+            <div className="stat-icon" style={{ backgroundColor: 'var(--invalid-badge-bg)', color: 'var(--danger)' }}>
               <XCircle size={24} />
             </div>
             <span className="stat-trend">{revokedPercentage}% of total</span>
@@ -83,7 +83,7 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#EDE9FE', color: '#7C3AED' }}>
+            <div className="stat-icon" style={{ backgroundColor: 'var(--stat-icon-purple-bg)', color: 'var(--stat-icon-purple-text)' }}>
               <CalendarDays size={24} />
             </div>
             <span className="stat-trend">{currentMonthName}</span>
@@ -97,7 +97,7 @@ const Dashboard = () => {
       <h2 className="section-title">Quick Actions</h2>
       <div className="quick-actions">
         {/* Navy background for the primary button per spec */}
-        <button className="btn btn-primary" style={{ backgroundColor: '#1B3A6B' }} onClick={() => navigate('/university/issue')}>
+        <button className="btn btn-primary" onClick={() => navigate('/university/issue')}>
           <PlusCircle size={16} />
           Issue New Certificate
         </button>

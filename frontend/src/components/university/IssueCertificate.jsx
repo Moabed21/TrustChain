@@ -75,13 +75,13 @@ const IssueCertificate = () => {
       <div className="card" style={{ width: '100%', maxWidth: '640px', padding: '32px' }}>
         
         {success && (
-          <div style={{ padding: '16px', backgroundColor: '#DCFCE7', color: '#16A34A', borderRadius: '8px', marginBottom: '24px', textAlign: 'center', fontWeight: '500' }}>
+          <div style={{ padding: '16px', backgroundColor: 'var(--valid-badge-bg)', color: 'var(--valid-badge-text)', borderRadius: '8px', marginBottom: '24px', textAlign: 'center', fontWeight: '500' }}>
             Certificate issued successfully! Hash: <span className="mono">{success}</span>
           </div>
         )}
 
         {error && (
-          <div style={{ padding: '16px', backgroundColor: '#FEE2E2', color: '#DC2626', borderRadius: '8px', marginBottom: '24px', textAlign: 'center', fontWeight: '500' }}>
+          <div style={{ padding: '16px', backgroundColor: 'var(--invalid-badge-bg)', color: 'var(--danger)', borderRadius: '8px', marginBottom: '24px', textAlign: 'center', fontWeight: '500' }}>
             {error}
           </div>
         )}
@@ -96,8 +96,8 @@ const IssueCertificate = () => {
               textAlign: 'center',
               cursor: 'pointer',
               marginBottom: '24px',
-              backgroundColor: file ? '#EFF6FF' : 'transparent',
-              borderColor: file ? '#2563EB' : 'var(--border)'
+              backgroundColor: file ? 'var(--primary-light)' : 'transparent',
+              borderColor: file ? 'var(--primary)' : 'var(--border)'
             }}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -110,7 +110,7 @@ const IssueCertificate = () => {
               style={{ display: 'none' }} 
               onChange={handleFileChange}
             />
-            <UploadCloud color={file ? '#2563EB' : '#94A3B8'} size={40} style={{ margin: '0 auto', marginBottom: '12px' }} />
+            <UploadCloud color={file ? 'var(--primary)' : 'var(--text-muted)'} size={40} style={{ margin: '0 auto', marginBottom: '12px' }} />
             {file ? (
               <div style={{ fontWeight: '500', color: 'var(--primary)' }}>{file.name}</div>
             ) : (

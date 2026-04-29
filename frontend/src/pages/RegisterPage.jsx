@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 import { Info } from 'lucide-react';
 import logo from '../assets/logo.png';
 import ThemeToggle from '../components/shared/ThemeToggle';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { isDark } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,7 +28,6 @@ const RegisterPage = () => {
     }
     
     setIsSubmitting(true);
-    // Mock processing
     setTimeout(() => {
       setIsSubmitting(false);
       setSuccess(true);
@@ -39,13 +36,13 @@ const RegisterPage = () => {
   };
 
   const inputStyle = {
-    background: isDark ? 'rgba(255,255,255,0.08)' : '#F8FAFF',
-    border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #C8D0E8',
-    color: isDark ? '#FFFFFF' : '#0D1B3E'
+    background: 'var(--input-bg)',
+    border: '1px solid var(--input-border)',
+    color: 'var(--input-text)'
   };
 
   const labelStyle = {
-    color: isDark ? '#A8B8D8' : '#0D1B3E',
+    color: 'var(--label-text)',
     fontWeight: '500'
   };
 
@@ -54,11 +51,11 @@ const RegisterPage = () => {
       display: 'flex',
       height: '100vh',
       overflow: 'hidden',
-      background: isDark ? '#0A1628' : '#EEF2FF'
+      background: 'var(--bg-app)'
     }}>
       <div className="login-left" style={{
         width: '65%',
-        background: isDark ? '#0F2044' : '#FFFFFF',
+        background: 'var(--bg-card)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -69,22 +66,22 @@ const RegisterPage = () => {
         <div style={{ width: '100%', maxWidth: '400px' }}>
 
           <h2 style={{
-            color: isDark ? '#FFFFFF' : '#0D1B3E',
+            color: 'var(--text-primary)',
             fontSize: '28px',
             fontWeight: '700',
             margin: '0 0 6px'
           }}>University Registration</h2>
 
           <p style={{
-            color: isDark ? '#8899CC' : '#7A8BBF',
+            color: 'var(--text-muted)',
             fontSize: '14px',
             margin: '0 0 24px'
           }}>Submit your registration request for admin approval</p>
 
           {success ? (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <div style={{ color: '#16A34A', fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Request Submitted!</div>
-              <p style={{ color: isDark ? '#8899CC' : '#7A8BBF', fontSize: '14px' }}>You will be redirected shortly...</p>
+              <div style={{ color: 'var(--success)', fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>Request Submitted!</div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>You will be redirected shortly...</p>
             </div>
           ) : (
             <>
@@ -92,13 +89,13 @@ const RegisterPage = () => {
                 display: 'flex',
                 gap: '12px',
                 padding: '12px',
-                backgroundColor: isDark ? 'rgba(42,82,160,0.2)' : '#EEF2FF',
-                border: isDark ? '1px solid rgba(42,82,160,0.3)' : '1px solid #C8D0E8',
+                backgroundColor: 'var(--primary-light)',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 marginBottom: '24px'
               }}>
-                <Info color={isDark ? '#A8B8D8' : '#2563EB'} size={20} style={{ flexShrink: 0 }} />
-                <div style={{ fontSize: '13px', color: isDark ? '#A8B8D8' : '#2A52A0' }}>
+                <Info color="var(--text-secondary)" size={20} style={{ flexShrink: 0 }} />
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                   Registration requires admin approval. You'll be notified via email once your application is reviewed.
                 </div>
               </div>
@@ -129,7 +126,7 @@ const RegisterPage = () => {
                   <input type="password" className="form-input" style={inputStyle} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-full" style={{ background: '#1B3A6B', color: '#FFFFFF' }} disabled={isSubmitting}>
+                <button type="submit" className="btn btn-primary w-full" disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : 'Submit Registration Request'}
                 </button>
               </form>
@@ -143,7 +140,7 @@ const RegisterPage = () => {
               </div>
 
               <div style={{ marginTop: '24px', textAlign: 'center' }}>
-                <Link to="/login" style={{ textDecoration: 'none', color: isDark ? '#C9973A' : '#2A52A0', fontWeight: '500', fontSize: '14px' }}>
+                <Link to="/login" style={{ textDecoration: 'none', color: 'var(--link-text)', fontWeight: '500', fontSize: '14px' }}>
                   ← Back to Login
                 </Link>
               </div>
@@ -155,7 +152,7 @@ const RegisterPage = () => {
 
       <div className="login-right" style={{
         width: '35%',
-        background: '#0D1B3E',
+        background: 'var(--hero-card)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -186,33 +183,28 @@ const RegisterPage = () => {
           src={logo}
           alt="TrustChain"
           style={{
-            width: '600px',
-            height: '600px',
+            width: '120px',
+            height: '120px',
             objectFit: 'contain',
             display: 'block',
-            margin: '0 auto',
-            position: 'relative',
-            zIndex: 1
+            margin: '0 auto 12px'
           }}
         />
         <h3 style={{
-          color: '#FFFFFF',
-          fontSize: '22px',
+          color: 'var(--hero-text)',
+          fontSize: '24px',
           fontWeight: '700',
           textAlign: 'center',
-          margin: '-220px 0 0',
-          position: 'relative',
-          zIndex: 2
+          margin: '0'
         }}>TrustChain</h3>
 
         <div style={{
-          width: '36px',
-          height: '2.5px',
-          background: '#C9973A',
+          width: '40px',
+          height: '3px',
+          background: 'var(--accent)',
           borderRadius: '2px',
-          margin: '10px 0 24px',
-          position: 'relative',
-          zIndex: 1
+          marginTop: '12px',
+          marginBottom: '24px'
         }} />
 
         {[
@@ -237,10 +229,10 @@ const RegisterPage = () => {
               width: '7px',
               height: '7px',
               borderRadius: '50%',
-              background: '#C9973A',
+              background: 'var(--accent)',
               flexShrink: 0
             }} />
-            <span style={{ color: '#A8B8D8', fontSize: '13px' }}>{text}</span>
+            <span style={{ color: 'var(--label-muted)', fontSize: '13px' }}>{text}</span>
           </div>
         ))}
 

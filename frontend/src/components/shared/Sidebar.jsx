@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShieldCheck, ClipboardList, Building2, FileText, Archive, LogOut, LayoutDashboard } from 'lucide-react';
+import { ClipboardList, Building2, FileText, Archive, LogOut, LayoutDashboard, History } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import logo from '../../assets/logo.png';
@@ -25,6 +25,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
       { label: 'Pending Applications', path: '/admin/pending', icon: ClipboardList },
       { label: 'Registered Universities', path: '/admin/universities', icon: Building2 },
+      { label: 'Activity Log', path: '/admin/activity', icon: History },
     ]
     : [
       { label: 'Dashboard', path: '/university/dashboard', icon: LayoutDashboard },
@@ -66,9 +67,9 @@ const Sidebar = ({ role, isOpen, onClose }) => {
               display: 'block'
             }}
           />
-          <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: '700', fontSize: '18px', color: '#FFFFFF' }}>TrustChain</span>
+          <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: '700', fontSize: '18px', color: 'var(--sidebar-text-active)' }}>TrustChain</span>
         </div>
-        <div style={{ color: '#8899CC', fontSize: '12px', paddingLeft: '30px' }}>
+        <div style={{ color: 'var(--sidebar-text)', fontSize: '12px', paddingLeft: '30px' }}>
           {subtitle}
         </div>
       </div>
@@ -76,7 +77,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
       {/* Gold Divider */}
       <div style={{
         height: '1px',
-        background: 'linear-gradient(90deg, transparent, #C9973A, transparent)',
+        background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
         margin: '16px 0'
       }} />
 
@@ -91,26 +92,26 @@ const Sidebar = ({ role, isOpen, onClose }) => {
           width: '36px',
           height: '36px',
           borderRadius: '50%',
-          background: '#C9973A',
+          background: 'var(--accent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '14px',
           fontWeight: '700',
-          color: '#FFFFFF',
+          color: 'var(--sidebar-text-active)',
           flexShrink: 0
         }}>
           {user?.name?.charAt(0).toUpperCase() || 'U'}
         </div>
         <div>
           <div style={{
-            color: '#FFFFFF',
+            color: 'var(--sidebar-text-active)',
             fontSize: '13px',
             fontWeight: '600',
             lineHeight: '1.2'
           }}>{user?.name || 'User'}</div>
           <div style={{
-            color: '#8899CC',
+            color: 'var(--sidebar-text)',
             fontSize: '11px',
             marginTop: '2px'
           }}>{userRole === 'admin' ? 'System Admin' : 'University'}</div>

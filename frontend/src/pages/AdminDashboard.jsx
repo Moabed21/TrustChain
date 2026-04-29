@@ -5,6 +5,7 @@ import Sidebar from '../components/shared/Sidebar';
 import PendingApplications from '../components/admin/PendingApplications';
 import RegisteredUniversities from '../components/admin/RegisteredUniversities';
 import Dashboard from '../components/admin/Dashboard';
+import ActivityLog from '../components/admin/ActivityLog';
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="pending" element={<PendingApplications />} />
           <Route path="universities" element={<RegisteredUniversities />} />
+          <Route path="activity" element={<ActivityLog />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </div>

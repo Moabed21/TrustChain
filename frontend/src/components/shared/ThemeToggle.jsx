@@ -7,11 +7,11 @@ const ThemeToggle = ({ variant = 'default' }) => {
   const styles = {
     default: {
       background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-      color: isDark ? '#FFFFFF' : '#0D1B3E',
+      color: 'var(--text-primary)',
     },
     navbar: {
       background: 'rgba(255,255,255,0.1)',
-      color: '#FFFFFF',
+      color: 'var(--hero-text)',
     },
     sidebar: {
       background: 'transparent',
