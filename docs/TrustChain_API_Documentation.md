@@ -17,10 +17,10 @@
 | Router | File | Prefix | Endpoints | Status |
 |--------|------|--------|-----------|--------|
 | Auth | `app/routers/auth.py` | `/api/auth` | 3 |  Done |
-| Universities | `app/routers/universities.py` | `/api/universities` | 7 |  Done |
+| Universities | `app/routers/universities.py` | `/api/universities` | 9 |  Done |
 | Certificates | `app/routers/certificates.py` | `/api/certificates` | 6 |  Done |
 | Verify | `app/routers/verify.py` | `/api/verify` | 3 |  Done |
-| **Total** | | | **19** | |
+| **Total** | | | **21** | |
 
 ---
 
@@ -577,6 +577,154 @@ URL:
 
 ---
 
+## PUT `/api/universities/me/wallet`
+### Status:  Done
+
+**Purpose:**
+Registers a university's MetaMask wallet address. Called once on first login after approval. Also funds the wallet with test MATIC and registers it on the smart contract.
+
+**Access:** University only (must be Active)
+
+**Who Uses It:**
+- University portal on first login — frontend detects `wallet_address == null` and prompts MetaMask connection
+
+**Internal Flow:**
+```
+1. Verify JWT token → is this a university?
+   → if not university → return 403
+2. Check if wallet already registered for this university
+   → if yes → return 400 (already set)
+3. Validate wallet address format using Web3.is_address()
+   → if invalid → return 400
+4. Convert to EIP-55 checksum format
+5. Check db.universities for duplicate wallet address
+   → if another university uses this wallet → return 400
+6. Save wallet_address to university document in MongoDB
+7. Fund the wallet: send MATIC from admin wallet → university wallet
+   → if funding fails → continue (admin can fund manually later)
+8. Register wallet on smart contract: registerUniversity(address)
+   → if registration fails → continue (admin can register manually later)
+9. Return result with funding and registration status
+```
+
+**Request:**
+```json
+{
+  "wallet_address": "0x742d35Cc6634C0532925a3b8D4C9b5690"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Wallet address registered successfully",
+  "wallet_address": "0x742d35Cc6634C0532925a3b8D4C9b5690",
+  "funded": true,
+  "funding_tx_hash": "0xabc123...",
+  "registered_on_chain": true,
+  "registration_tx_hash": "0xdef456..."
+}
+```
+
+**Error Responses:**
+| Code | Reason |
+|------|--------|
+| 401 | Token missing or invalid |
+| 403 | Not a university |
+| 400 | Wallet already registered for this university |
+| 400 | Invalid wallet address format |
+| 400 | Wallet address already used by another university |
+
+**Why Funding and On-Chain Registration Can Fail Silently:**
+```
+Both are external blockchain calls that may fail (RPC down, insufficient admin balance, etc.)
+The wallet address is still saved in MongoDB so admin can retry manually.
+Frontend receives funded: false or registered_on_chain: false to show a warning.
+```
+
+---
+
+## GET `/api/universities/all_universities`
+### Status:  Done
+
+**Purpose:**
+Returns all registered universities for the admin dashboard. Supports pagination to prevent overloading the response with too many records.
+
+**Access:** Admin only
+
+**Who Uses It:**
+- Admin dashboard — the "Manage Universities" page that lists all universities with suspend/reactivate actions
+
+**Internal Flow:**
+```
+1. Verify JWT token → is this admin?
+   → if not admin → return 403
+2. Calculate skip = (page - 1) * limit
+   → page 1 → skip 0 (first 100)
+   → page 2 → skip 100 (universities 101-200)
+3. Query db.universities with skip() and limit()
+4. Convert all _id ObjectId fields to strings
+5. Return list (empty [] if no universities — not an error)
+```
+
+**Request:**
+```
+Headers:
+  Authorization: Bearer <admin_access_token>
+
+URL:
+  GET /api/universities/all_universities?page=1&limit=100
+
+Query Parameters:
+  page:  integer (default: 1)   — which page to return
+  limit: integer (default: 100) — how many per page
+```
+
+**Response:**
+```json
+[
+  {
+    "_id": "64abc123def456789012",
+    "university_name": "University of Jordan",
+    "country": "Jordan",
+    "email": "admin@uj.edu.jo",
+    "status": "Active",
+    "register_date": "2026-03-30T10:00:00.000Z",
+    "total_certificates": 12,
+    "wallet_address": "0x742d35Cc6634C0532925a3b8D4C9b5690",
+    "role": "university"
+  },
+  {
+    "_id": "64def456abc789012345",
+    "university_name": "PSUT",
+    "country": "Jordan",
+    "email": "admin@psut.edu.jo",
+    "status": "Suspended",
+    "register_date": "2026-04-01T12:00:00.000Z",
+    "total_certificates": 3,
+    "wallet_address": "0x123abc456def789012345678901234567890abcd",
+    "role": "university"
+  }
+]
+```
+
+**Error Responses:**
+| Code | Reason |
+|------|--------|
+| 401 | Token missing or invalid |
+| 403 | Not admin |
+
+**Pagination Example:**
+```
+Page 1: GET /api/universities/all_universities?page=1&limit=100 → universities 1-100
+Page 2: GET /api/universities/all_universities?page=2&limit=100 → universities 101-200
+Page 3: GET /api/universities/all_universities?page=3&limit=100 → universities 201-300
+
+If fewer than `limit` results are returned, you've reached the last page.
+```
+
+---
+
 # 3. Certificates Router
 ### File: `app/routers/certificates.py`
 ### Prefix: `/api/certificates`
@@ -942,15 +1090,17 @@ Body:
 | 8 | GET `/api/universities/{id}` | universities.py | Admin |  Done |
 | 9 | PUT `/api/universities/{id}/suspend` | universities.py | Admin |  Done |
 | 10 | PUT `/api/universities/{id}/reactivate` | universities.py | Admin |  Done |
-| 11 | POST `/api/certificates` | certificates.py | University |  Done |
-| 12 | POST `/api/certificates/{id}/confirm` | certificates.py | University |  Done |
-| 13 | GET `/api/certificates` | certificates.py | University |  Done |
-| 14 | GET `/api/certificates/{id}` | certificates.py | University |  Done |
-| 15 | PUT `/api/certificates/{id}/revoke` | certificates.py | University |  Done |
-| 16 | POST `/api/certificates/{id}/revoke/confirm` | certificates.py | University |  Done |
-| 17 | GET `/api/verify` | verify.py | Public |  Done |
-| 18 | POST `/api/verify/file` | verify.py | Public |  Done |
-| 19 | POST `/api/verify/qr` | verify.py | Public |  Done |
+| 11 | PUT `/api/universities/me/wallet` | universities.py | University |  Done |
+| 12 | GET `/api/universities/all_universities` | universities.py | Admin |  Done |
+| 13 | POST `/api/certificates` | certificates.py | University |  Done |
+| 14 | POST `/api/certificates/{id}/confirm` | certificates.py | University |  Done |
+| 15 | GET `/api/certificates` | certificates.py | University |  Done |
+| 16 | GET `/api/certificates/{id}` | certificates.py | University |  Done |
+| 17 | PUT `/api/certificates/{id}/revoke` | certificates.py | University |  Done |
+| 18 | POST `/api/certificates/{id}/revoke/confirm` | certificates.py | University |  Done |
+| 19 | GET `/api/verify` | verify.py | Public |  Done |
+| 20 | POST `/api/verify/file` | verify.py | Public |  Done |
+| 21 | POST `/api/verify/qr` | verify.py | Public |  Done |
 
 
 ---
