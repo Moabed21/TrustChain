@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     if (foundUser && foundUser.password === password) {
       setUser(foundUser);
       setRole(foundUser.role);
-      return foundUser.role; // return role so caller can navigate
+      return foundUser.role;
     }
     return null;
   };

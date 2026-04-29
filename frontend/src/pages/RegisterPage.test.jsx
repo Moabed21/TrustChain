@@ -3,7 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import RegisterPage from './RegisterPage';
 
-// Standardized Mock Router hook redirection logic
+
 const mockedNavigate = vi.fn();
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
@@ -48,7 +48,7 @@ describe('RegisterPage Component', () => {
     fireEvent.change(container.querySelector('input[name="password"]'), { target: { value: 'pass123' } });
     fireEvent.change(container.querySelector('input[name="confirmPassword"]'), { target: { value: 'passXYZ' } });
     
-    // To rigorously verify JS function handling ignoring DOM HTML validation traps, directly submit the form wrapper
+    // Submit the form directly to bypass HTML validation
     fireEvent.submit(container.querySelector('form'));
     
     expect(alertSpy).toHaveBeenCalledWith("Passwords don't match");
@@ -58,7 +58,7 @@ describe('RegisterPage Component', () => {
   it('successfully executes registration and follows mocked timer sequencing to redirect', () => {
     const { container } = renderRegister();
     
-    // Feed unified mapping entries
+    // Fill in form fields
     fireEvent.change(container.querySelector('input[name="password"]'), { target: { value: 'pass123' } });
     fireEvent.change(container.querySelector('input[name="confirmPassword"]'), { target: { value: 'pass123' } });
     fireEvent.change(container.querySelector('input[name="name"]'), { target: { value: 'University Tech' } });
@@ -67,18 +67,18 @@ describe('RegisterPage Component', () => {
     
     fireEvent.submit(container.querySelector('form'));
     
-    // The loading text appears while executing internal hook logic
+    // Button shows loading state
     expect(screen.getByRole('button')).toHaveTextContent(/submitting/i);
     
-    // Advance timers by the arbitrary 1-second process wait
+    // Advance timers past the 1-second processing delay
     act(() => {
       vi.advanceTimersByTime(1100);
     });
     
-    // Acknowledgment banner appears natively
+    // Success message appears
     expect(screen.getByText('Request Submitted!')).toBeInTheDocument();
     
-    // Advance internal redirect setTimeout 
+    // Advance past redirect delay
     act(() => {
       vi.advanceTimersByTime(2100);
     });

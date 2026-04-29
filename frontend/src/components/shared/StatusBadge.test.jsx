@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import StatusBadge from './StatusBadge';
 
-describe('StatusBadge Abstract Component', () => {
-  it('binds native standard class styling for "valid" inputs', () => {
+describe('StatusBadge Component', () => {
+  it('applies status-valid class for valid status', () => {
     render(<StatusBadge status="valid" />);
     const badge = screen.getByText('valid');
     
@@ -11,7 +11,7 @@ describe('StatusBadge Abstract Component', () => {
     expect(badge).toHaveClass('status-valid');
   });
 
-  it('binds appropriate warning variants for "revoked" inputs', () => {
+  it('applies status-revoked class for revoked status', () => {
     render(<StatusBadge status="revoked" />);
     const badge = screen.getByText('revoked');
     
@@ -19,9 +19,9 @@ describe('StatusBadge Abstract Component', () => {
     expect(badge).toHaveClass('status-revoked');
   });
 
-  it('safely wraps unpredictable values using fallback styling mechanism explicitly', () => {
-    // "pending" is not natively listed within StatusStyles inside the component mapping logic
-    // Thus it falls to "invalid" gracefully
+  it('falls back to status-invalid for unknown statuses', () => {
+    // "pending" is not in the StatusBadge mapping
+    // Falls back to "invalid"
     render(<StatusBadge status="pending" />);
     const badge = screen.getByText('pending');
     

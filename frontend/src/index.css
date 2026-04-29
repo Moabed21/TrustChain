@@ -420,20 +420,6 @@ td {
   color: var(--text-secondary);
 }
 
-.btn--accent {
-  background: var(--accent);
-  color: white;
-}
-
-.btn--accent:hover {
-  background: var(--accent-hover);
-}
-
-.btn-accent:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-
 .qr-border-animated {
   padding: 2.5px;
   border-radius: 12px;
@@ -503,12 +489,9 @@ td {
   }
 }
 
-/* ─── BREAKPOINTS ───────────────────── */
-/* Mobile:  < 768px  */
-/* Tablet:  768px - 1024px */
-/* Desktop: > 1024px */
+/* BREAKPOINTS: Mobile < 768px | Tablet 768-1024px | Desktop > 1024px */
 
-/* ─── GLOBAL RESPONSIVE ─────────────── */
+/* GLOBAL RESPONSIVE */
 @media (max-width: 768px) {
   :root {
     --sidebar-w: 0px;
@@ -581,7 +564,7 @@ td {
   }
 }
 
-/* ─── SIDEBAR RESPONSIVE ─────────────── */
+/* SIDEBAR RESPONSIVE */
 .sidebar {
   transition: transform 0.3s ease;
 }
@@ -615,7 +598,7 @@ td {
   }
 }
 
-/* ─── LOGIN / REGISTER RESPONSIVE ────── */
+/* LOGIN / REGISTER RESPONSIVE */
 @media (max-width: 768px) {
   .login-split {
     flex-direction: column-reverse !important;
@@ -637,7 +620,7 @@ td {
   }
 }
 
-/* ─── PUBLIC PAGE RESPONSIVE ─────────── */
+/* PUBLIC PAGE RESPONSIVE */
 @media (max-width: 768px) {
   .hero-title {
     font-size: 32px !important;
@@ -657,7 +640,7 @@ td {
   }
 }
 
-/* ─── CHARTS RESPONSIVE ──────────────── */
+/* CHARTS RESPONSIVE */
 @media (max-width: 768px) {
   .charts-grid {
     grid-template-columns: 1fr !important;
@@ -668,7 +651,7 @@ td {
   }
 }
 
-/* ─── HAMBURGER BUTTON ───────────────── */
+/* HAMBURGER BUTTON */
 .hamburger-btn {
   display: none;
   position: fixed;

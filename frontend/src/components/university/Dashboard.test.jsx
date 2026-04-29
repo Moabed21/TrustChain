@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 
-// Use vi.hoisted to ensure we can mutate the mock data between tests gracefully
+
 const { mockDataStore } = vi.hoisted(() => ({
   mockDataStore: { current: [] }
 }));
@@ -46,14 +46,14 @@ describe('University Dashboard Component', () => {
   });
 
   it('calculates and renders stats cards (Total, Valid, Revoked, and This Month) exactly', () => {
-    // Dynamically calculate the month and year so this test doesn't expire
+    // Calculate current month for "This Month" test
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
-    // Using an explicit middle-of-month valid UTC date string
+
     const todayStr = `${currentYear}-${currentMonth}-15T12:00:00Z`;
 
-    // Append 5th certificate to test "This Month" calculation and dynamic percentage
+    // Add a certificate dated this month
     mockDataStore.current = [
       ...mockDataStore.current,
       { id: 5, studentName: "Student 5", hash: "CERT5", issueDate: todayStr, status: "valid" }
@@ -62,11 +62,11 @@ describe('University Dashboard Component', () => {
     renderDashboard();
 
     // With 5 records: 4 are valid, 1 is revoked. 
-    // Wait -> 80% Valid, 20% Revoked
+    // 5 records: 4 valid, 1 revoked
     expect(screen.getByText('80% of total')).toBeInTheDocument();
     expect(screen.getByText('20% of total')).toBeInTheDocument();
 
-    // Validate absolute numerical values within the specific stat cards
+
     const getStatNumber = (labelText) => {
       const label = screen.getByText(labelText);
       return label.closest('.stat-card').querySelector('.stat-number').textContent;

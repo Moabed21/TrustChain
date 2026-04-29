@@ -9,7 +9,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Make sure dynamically generated dates format exactly as requested: "Monday, March 24, 2026"
   const todayFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -26,10 +25,6 @@ const Dashboard = () => {
   
   const thisMonth = mockIssuedCertificates.filter(c => {
     const issueDate = new Date(c.issueDate);
-    // Be careful of UTC dates causing timezone mismatch, but mockDates are "2024-05-13" so new Date() works reasonably enough for a UI exercise
-    // Especially "2024-05-13" parses as local if we just use normal JS matching. If not, it's a minor mock implementation detail.
-    // In UTC: new Date("2024-05-13") is usually parsed correctly
-    // Better safely extract via strings if we want stable behavior, but using standard methods as requested.
     return issueDate.getUTCMonth() === currentMonth && issueDate.getUTCFullYear() === currentYear;
   }).length;
 
