@@ -15,7 +15,6 @@ const PublicPage = () => {
   const { isDark } = useTheme();
 
   const [scanMode, setScanMode] = useState(null);
-  // null | 'camera' | 'file'
   const [cameraError, setCameraError] = useState('');
   const [stream, setStream] = useState(null);
   const videoRef = useRef(null);
@@ -51,7 +50,6 @@ const PublicPage = () => {
   const handleQRFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // UI only for now - will connect to QR decode API later
       alert(`PDF selected: ${file.name}\nWill be verified via backend.`);
     }
   };
@@ -206,7 +204,6 @@ const PublicPage = () => {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#0A1628', marginTop: 0, paddingTop: 0, position: 'relative' }}>
       <header style={{ background: '#0D1B3E', width: '100%', position: 'relative' }}>
 
-        {/* New Single Unified Top Bar */}
         <div style={{
           background: 'transparent',
           position: 'absolute',
@@ -220,7 +217,6 @@ const PublicPage = () => {
           justifyContent: 'space-between',
           borderBottom: '1px solid rgba(255,255,255,0.08)'
         }}>
-          {/* Left: Logo + Name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <img
               src={logo}
@@ -245,7 +241,6 @@ const PublicPage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <ThemeToggle variant="navbar" />
 
-            {/* Right: Login button */}
             <button
               onClick={() => navigate('/login')}
               style={{
@@ -263,7 +258,6 @@ const PublicPage = () => {
           </div>
         </div>
 
-        {/* Hero Content */}
         <div style={{ position: 'relative', width: '100%' }}>
           <video
             src={heroVideo}
@@ -323,12 +317,10 @@ const PublicPage = () => {
             borderRadius: '16px',
             boxShadow: isDark ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.07)'
           }}>
-            <h2 style={{ marginBottom: '24px', fontSize: '24px', color: isDark ? '#FFFFFF' : '#0D1B3E' }}>Verify Certificate</h2>
+            <h2 style={{ marginBottom: '24px', fontSize: '24px', color: isDark ? '#FFFFFF' : '#0D1B3E', textAlign: 'center' }}>Verify Certificate</h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '32px' }}>
-
-              {/* Left Column - QR */}
-              <div className="qr-border-animated">
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <div className="qr-border-animated" style={{ width: '100%', maxWidth: '400px' }}>
                 <div style={{
                   background: 'var(--bg-card)',
                   borderRadius: '10px',
@@ -336,7 +328,6 @@ const PublicPage = () => {
                   textAlign: 'center'
                 }}>
 
-                  {/* Default state - no scan active */}
                   {scanMode === null && (
                     <>
                       <QrCode size={48} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
@@ -418,7 +409,6 @@ const PublicPage = () => {
                     </>
                   )}
 
-                  {/* Camera active state */}
                   {scanMode === 'camera' && (
                     <>
                       <div style={{ position: 'relative', marginBottom: '12px' }}>
@@ -435,7 +425,6 @@ const PublicPage = () => {
                             background: '#000'
                           }}
                         />
-                        {/* Scan overlay */}
                         <div style={{
                           position: 'absolute',
                           top: '50%', left: '50%',
@@ -483,7 +472,6 @@ const PublicPage = () => {
                     </>
                   )}
 
-                  {/* File upload state */}
                   {scanMode === 'file' && (
                     <>
                       {cameraError && (
@@ -563,36 +551,6 @@ const PublicPage = () => {
 
                 </div>
               </div>
-
-              {/* Right Column - Manual Input */}
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <div className="form-group">
-                  <label className="form-label" style={{ fontWeight: '500', color: isDark ? '#A8B8D8' : '#0D1B3E' }}>Certificate Hash / ID</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Enter certificate hash or ID"
-                    value={hashInput}
-                    onChange={(e) => setHashInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-                    style={{
-                      background: isDark ? 'rgba(255,255,255,0.08)' : '#F8FAFF',
-                      border: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid #C8D0E8',
-                      color: isDark ? '#FFFFFF' : '#0D1B3E',
-                      borderRadius: '8px',
-                      height: '40px',
-                      padding: '0 12px',
-                      width: '100%'
-                    }}
-                  />
-                  <div className="text-muted text-xs" style={{ marginTop: '6px', color: isDark ? '#8899CC' : '#7A8BBF' }}>Try: CERT123456 (Valid) or CERT789012 (Revoked)</div>
-                </div>
-
-                <button className="btn btn-primary w-full" style={{ marginTop: '12px' }} onClick={handleVerify}>
-                  Verify Certificate
-                </button>
-              </div>
-
             </div>
           </div>
 
