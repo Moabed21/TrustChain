@@ -4,7 +4,9 @@ dist/
 *.log
 .DS_Store
 .vscode/
-*/__pycache__/
+__pycache__/
+**/*.py[cod]
+*$py.class
 summary.md
 .venv/
 docs/TrustChain_Frontend_S10_Guide.md
