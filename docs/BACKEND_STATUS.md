@@ -158,7 +158,7 @@ Graduation_Project_2/
 
 ---
 
-## 7. API Endpoints — 18 Total
+## 7. API Endpoints — 21 Total
 
 ### Auth Router — `/api/auth` ✅ 3/3
 
@@ -170,7 +170,7 @@ Graduation_Project_2/
 
 **Status gates at login:** Pending → 403, Suspended → 403, wrong password → 401
 
-### Universities Router — `/api/universities` ✅ 8/8
+### Universities Router — `/api/universities` ✅ 9/9
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
@@ -182,6 +182,7 @@ Graduation_Project_2/
 | `PUT` | `/{id}/suspend` | Admin | Suspend an active university |
 | `PUT` | `/{id}/reactivate` | Admin | Reactivate a suspended university |
 | `PUT` | `/me/wallet` | University | Register wallet + fund + on-chain register |
+| `GET` | `/all_universities` | Admin | List all registered universities (paginated: `?page=1&limit=100`) |
 
 ### Certificates Router — `/api/certificates` ✅ 6/6
 
@@ -196,14 +197,15 @@ Graduation_Project_2/
 
 **Two-phase pattern:** Both issuance and revocation use a prepare → sign → confirm flow because MetaMask signing happens on the frontend.
 
-### Verify Router — `/api/verify` ⬜ 0/2
+### Verify Router — `/api/verify` ✅ 3/3
 
-| Method | Path | Auth | Purpose | Status |
-|--------|------|------|---------|--------|
-| `POST` | `/` | Public | Verify certificate by hash | ⬜ Not implemented |
-| `POST` | `/qr` | Public | Verify certificate from QR scan | ⬜ Not implemented |
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `GET` | `/` | Public | Health check — confirms verify router is mounted |
+| `POST` | `/file` | Public | Upload PDF → hash → check on blockchain → VALID/REVOKED/FAKE |
+| `POST` | `/qr` | Public | Upload QR image → decode → decrypt CID → fetch IPFS → decrypt PDF → hash → check on blockchain |
 
-**Currently:** Only a placeholder `GET /` returning `"verify router is working"`.
+**Both verification endpoints are public** — no auth required. Employers, students, anyone can verify.
 
 ---
 
@@ -438,7 +440,7 @@ Each university manages their own wallet. The private key never touches the back
 - [x] Auth middleware (JWT decode, role guards)
 - [x] User / University / Certificate Pydantic models
 - [x] Auth router (login, me, logout)
-- [x] Universities router (register, approve, reject, get, suspend, reactivate, wallet)
+- [x] Universities router (register, approve, reject, get, suspend, reactivate, wallet, all_universities)
 - [x] Certificates router (create, confirm, list, get, revoke, revoke/confirm)
 - [x] Hashing service (SHA-256 PDF fingerprint)
 - [x] Encryption service (AES-256-GCM for PDF + CID)
@@ -450,7 +452,6 @@ Each university manages their own wallet. The private key never touches the back
 - [x] Contract ABI JSON
 
 ### ⬜ Remaining — Backend
-- [ ] **Verify router** — `POST /api/verify` (by hash) and `POST /api/verify/qr` (by QR scan)
 - [ ] **Test suite** — all 4 test files are empty (test_auth, test_certificates, test_universities, test_verify)
 - [ ] **Download endpoint** — `GET /api/certificates/{id}/download` (fetch from IPFS, decrypt, return PDF)
 - [ ] **Error handling polish** — consistent error response format across all routers
@@ -485,10 +486,10 @@ Each university manages their own wallet. The private key never touches the back
 | Router | Endpoints | Status |
 |--------|-----------|--------|
 | Auth | 3 | ✅ Complete |
-| Universities | 8 | ✅ Complete |
+| Universities | 9 | ✅ Complete |
 | Certificates | 6 | ✅ Complete |
-| Verify | 0 (1 placeholder) | ⬜ Not started |
-| **Total** | **17 implemented + 2 pending** | |
+| Verify | 3 | ✅ Complete |
+| **Total** | **21** | ✅ All implemented |
 
 ---
 
