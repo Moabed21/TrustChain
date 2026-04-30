@@ -1,13 +1,27 @@
+# ── Dependencies ──
 node_modules/
+backend/venv/
+.venv/
+
+# ── Build output ──
 dist/
-.env
+
+# ── Environment & Secrets ──
+backend/.env
+frontend/.env
+
+# ── OS / Editor ──
 *.log
 .DS_Store
 .vscode/
+
+# ── Python bytecode ──
 __pycache__/
 **/*.py[cod]
 *$py.class
-summary.md
-.venv/
+.pytest_cache/
+
+# ── Project-specific ignores ──
+docs/summary.md
 docs/TrustChain_Frontend_S10_Guide.md
 docs/TrustChain_Wallet_Solutions.md
