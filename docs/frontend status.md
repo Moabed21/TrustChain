@@ -1,323 +1,370 @@
 # TrustChain  Frontend Documentation
 
+> **Last updated:** 2026-05-02
+> **Scope:** Frontend only (React + ethers.js + Vite)
+> **Team:** Frontend
+
+---
+
 ## 1. Project Overview
-**What is TrustChain:**
-TrustChain is a decentralized Blockchain-based Academic Certificate Verification System. It allows universities to autonomously issue and revoke academic certificates while providing a public-facing portal for global certificate verification.
+
+TrustChain is a decentralized Blockchain-based Academic Certificate Verification System. Universities issue and revoke academic certificates on the Polygon Amoy blockchain. Employers and students can publicly verify any certificate via PDF upload or QR scan.
 
 **Tech Stack:**
 - **Framework:** React 18, Vite
-- **Routing:** React Router DOM
-- **State Management:** React Context API & `useState` hook (currently using local mock data)
-- **Styling:** Vanilla CSS tightly integrated with custom global custom variables for light/dark mode themes.
+- **Routing:** React Router DOM v6
+- **State Management:** React Context API (`AuthContext`, `ThemeContext`, `WalletContext`)
+- **Blockchain:** ethers.js v6 — wallet generation, keystore encryption, contract signing
+- **HTTP Client:** axios (with JWT interceptors)
+- **Styling:** Vanilla CSS with global custom properties for light/dark mode
 - **Data Visualization:** Recharts
 - **Icons:** Lucide React
 
-**How to run the project:**
+**How to run:**
 ```bash
 npm install
 npm run dev
 ```
 
-**Login credentials for testing:**
-- **System Admin:** `admin@trustchain.com` (password: `password`)
-- **University:** `admin@stanford.edu` (password: `password`)
+**Required environment variables (`.env`):**
+```
+VITE_API_BASE_URL=http://localhost:8000
+VITE_CONTRACT_ADDRESS=0x...
+VITE_POLYGON_RPC_URL=https://rpc-amoy.polygon.technology
+```
 
 ---
 
-## 2. Project Structure
-- `App.jsx`  Core React structure initializing Auth, Theme providers, and defining App Routes.
-- `index.css`  Standardized global styles and complex CSS variables configuring the Theme System logic.
-- `context/AuthContext.jsx`  Global state context managing active user, roles, and login/logout methods.
-- `context/ThemeContext.jsx`  Global state context tracking and toggling between `data-theme="light"` and `data-theme="dark"`.
-- `data/mockData.js`  All mocked state structures mimicking intended database functionality.
-- `pages/AdminDashboard.jsx`  Router and dynamic layout wrapper configuring the System Admin sidebar view.
-- `pages/UniversityDashboard.jsx`  Router and dynamic layout wrapper configuring the University sidebar view.
-- `pages/LoginPage.jsx`  Multi-role public authentication page.
-- `pages/PublicPage.jsx`  Root public-landing verification hub (includes Hero wrapper and certificate querying).
-- `pages/RegisterPage.jsx`  Public-facing University request registration form.
-- `components/admin/Dashboard.jsx`  Platform-wide data viz displaying university counts, line charts, and active notifications.
-- `components/admin/PendingApplications.jsx`  Datatable interface handling requests allowing approve/reject actions.
-- `components/admin/RegisteredUniversities.jsx`  Datatable managing authorized universities allowing suspend/reactivate actions.
-- `components/university/Dashboard.jsx`  Institution-specific data viz detailing individual certificate volumes.
-- `components/university/IssueCertificate.jsx`  Multi-part interface allowing PDF upload mapping to specific student metadata.
-- `components/university/IssuedCertificates.jsx`  Comprehensive datatable displaying all issued certificates with view/revoke tracking.
-- `components/university/CertificateDetailsModal.jsx`  Standalone modal parsing granular certificate payload metadata.
-- `components/shared/ConfirmModal.jsx`  Reusable, accessible unified interactive confirmation dialogue modal.
-- `components/shared/Sidebar.jsx`  Primary app navigation tree adapting nested routing contexts per user role.
-- `components/shared/StatusBadge.jsx`  Dynamic standardizing pill-shaped UI components conditionally rendering statuses.
-- `components/shared/ThemeToggle.jsx`  Navbar/Sidebar bound theme swapper toggling dark/light context.
+## 2. Integration Status
+
+**The frontend is fully integrated with the backend.** All mock data has been removed and replaced with real API calls. Authentication, wallet setup, certificate issuance, revocation, and public verification all connect to the live backend.
+
+| Area | Status | Notes |
+|------|--------|-------|
+| Auth (login/logout) | ✅ Real API | `POST /api/auth/login`, `GET /api/auth/me` |
+| University registration | ✅ Real API | `POST /api/universities/register` |
+| Admin — pending apps | ✅ Real API | `GET /api/universities/applications` |
+| Admin — approve/reject | ✅ Real API | `PUT /api/universities/applications/{id}/approve\|reject` |
+| Admin — university list | ✅ Real API | `GET /api/universities/all_universities` |
+| Admin — suspend/reactivate | ✅ Real API | `PUT /api/universities/{id}/suspend\|reactivate` |
+| Wallet setup | ✅ Real (ethers.js + backend) | `PUT /api/universities/me/wallet` |
+| Issue certificate | ✅ Real API + on-chain | `POST /api/certificates/issue` → ethers.js sign → `POST /api/certificates/{id}/confirm` |
+| Issued certificates list | ✅ Real API | `GET /api/certificates` |
+| Revoke certificate | ✅ Real API + on-chain | `PUT /api/certificates/{id}/revoke` → ethers.js sign → `POST /api/certificates/{id}/revoke/confirm` |
+| Public verify by PDF | ✅ Real API | `POST /api/verify/file` |
+| Public verify by QR | ✅ Real API | `POST /api/verify/qr` (file upload or live camera) |
+| Admin dashboard stats | ⚠️ Partial | University + pending counts are real; certificate charts use empty arrays (no `/api/admin/stats` endpoint) |
+| Admin activity log | ⬜ Not integrated | Uses empty array — no backend endpoint exists |
+| Certificate download | ⬜ Not integrated | Backend download endpoint not yet implemented |
 
 ---
 
-## 3. Pages
+## 3. Project Structure
 
-### **1. Public Page**
-- **Route Path:** `/`
-- **Who can access it:** Public
-- **What it does:** Serves as the landing page, handling the core certificate status querying through manual hash input or QR scanner mocks.
-- **useState variables:**
-  - `hashInput` (string): Stores the requested query ID from the input box.
-  - `result` (object|null): Stores the retrieved certificate object payload.
-  - `hasSearched` (boolean): Triggers the results rendering UI container when queried.
-- **Key Functions:**
-  - `handleVerify()`: Executes the look-up matching against mock database.
-- **Backend API Requirements:**
-  - **Endpoint:** `GET /api/certificates/:hash`
-  - **Expected Response:** `{ status, studentName, issuingUniversity, degreeTitle, issueDate, certificateHash }`
-
-### **2. Login Page**
-- **Route Path:** `/login`
-- **Who can access it:** Public
-- **What it does:** Allows universities and admins to authenticate into their respective portals.
-- **useState variables:**
-  - `email` (string): Unbound email entry.
-  - `password` (string): Unbound password entry.
-  - `error` (string): Manages invalid login UI prompts.
-- **Key Functions:**
-  - `handleLogin()`: Triggers Context API dispatch testing credential validity.
-- **Backend API Requirements:**
-  - **Endpoint:** `POST /api/auth/login`
-  - **Request Body:** `{ email, password }`
-  - **Expected Response:** `{ token: 'JWT...', user: { name, email, role } }`
-
-### **3. Registration Page**
-- **Route Path:** `/register`
-- **Who can access it:** Public
-- **What it does:** Submits university access requests that push to the admin `Pending Applications` table.
-- **useState variables:**
-  - `isSubmitting` (bool): Overrides button logic for loading states.
-  - `success` (bool): Toggles the success confirmation UI.
-  - `formData` (object): Tracks `name`, `country`, `email`, `password`, `confirmPassword`.
-- **Key Functions:**
-  - `handleChange()`: Dynamically tracks form object state.
-  - `handleSubmit()`: Validates password equality and posts.
-- **Backend API Requirements:**
-  - **Endpoint:** `POST /api/auth/register-university`
-  - **Request Body:** `{ name, country, email, password }`
-  - **Expected Response:** `201 Created { message: 'Success' }`
-
-### **4. Admin Dashboard Wrapper**
-- **Route Path:** `/admin/*`
-- **Who can access it:** Admins only (Protected)
-- **What it does:** Encapsulates the admin workspace layout generating Sidebar spacing and dynamic Routes binding to nested components.
-- **useState variables:**
-  - `sidebarOpen` (bool): Tracks hamburger toggle states for mobile layouts.
-
-### **5. University Dashboard Wrapper**
-- **Route Path:** `/university/*`
-- **Who can access it:** Universities only (Protected)
-- **What it does:** Encapsulates the university workspace layout generating Sidebar spacing and dynamic Routes binding to nested components.
-- **useState variables:**
-  - `sidebarOpen` (bool): Tracks hamburger toggle states for mobile layouts.
+```
+frontend/src/
+├── App.jsx                    ✅ Routes, providers, ProtectedRoute, RoleRoute
+├── index.css                  ✅ CSS variables, light/dark theme, global styles
+├── main.jsx                   ✅ React entry point
+├── context/
+│   ├── AuthContext.jsx         ✅ login(), logout(), refreshUser(), updateUser()  real API
+│   ├── ThemeContext.jsx        ✅ light/dark toggle
+│   └── WalletContext.jsx       ✅ loadWallet(), clearWallet(), pendingPassword
+├── services/
+│   ├── api.js                  ✅ All 21 backend endpoints mapped, JWT interceptors
+│   └── certificateService.js   ⚠️ Legacy file (unused — api.js covers all endpoints)
+├── pages/
+│   ├── PublicPage.jsx          ✅ PDF + QR verification, live camera scan
+│   ├── LoginPage.jsx           ✅ Real auth, wallet decryption on login
+│   ├── RegisterPage.jsx        ✅ Real API registration
+│   ├── AdminDashboard.jsx      ✅ Wrapper + routing for admin views
+│   └── UniversityDashboard.jsx ✅ Wrapper + routing + wallet gate
+├── components/
+│   ├── admin/
+│   │   ├── Dashboard.jsx       ⚠️ Partial  real university/pending counts; charts empty
+│   │   ├── PendingApplications.jsx  ✅ Real API — fetch, approve, reject
+│   │   ├── RegisteredUniversities.jsx ✅ Real API — fetch, suspend, reactivate
+│   │   └── ActivityLog.jsx     ⬜ Empty array — no backend endpoint
+│   ├── university/
+│   │   ├── Dashboard.jsx       ✅ Real API — stats computed from real certificate data
+│   │   ├── IssueCertificate.jsx ✅ Full 3-step flow: backend → ethers.js sign → confirm
+│   │   ├── IssuedCertificates.jsx ✅ Real API — list, revoke (2-step flow)
+│   │   ├── CertificateDetailsModal.jsx ✅ Modal UI for certificate details
+│   │   └── WalletSetup.jsx     ✅ ethers.js keygen + keystore + backend registration
+│   └── shared/
+│       ├── ConfirmModal.jsx     ✅ Reusable confirmation dialog
+│       ├── Sidebar.jsx          ✅ Role-aware navigation
+│       ├── StatusBadge.jsx      ✅ Status pill (Issued, Revoked, Pending, etc.)
+│       ├── ThemeToggle.jsx      ✅ Light/dark toggle
+│       └── ErrorBoundary.jsx    ✅ React error boundary wrapper
+├── contracts/
+│   └── TrustChain_ABI.json     ✅ Contract ABI (must match deployed contract)
+└── data/
+    └── mockData.js             ✅ File exists but no longer imported by any component
+```
 
 ---
 
-## 4. Components
+## 4. Auth Flow
 
-### **1. components/admin/Dashboard.jsx**
-- **What it does:** Renders platform-wide Recharts visualizations and generic count widgets alongside a recent activity log.
-- **Props:** None
-- **useState variables:** None
-- **Key Functions:**
-  - `getActionIcon()`: Dynamically generates lucide icon assets matching string payloads.
-- **Backend API Requirements:**
-  - **Read:** `GET /api/admin/stats`
-  - **Read:** `GET /api/admin/metrics/chart-data`
-  - **Read:** `GET /api/admin/activity`
+### Login
+1. `LoginPage` calls `login(email, password)` from `AuthContext`
+2. `AuthContext.login()` calls `loginAPI()` → `POST /api/auth/login` (form-encoded: `username` + `password`)
+3. On success: stores JWT in `localStorage`, calls `getMeAPI()` → `GET /api/auth/me`
+4. User object (`id`, `email`, `role`, `status`, `wallet_address`) stored in state + `localStorage`
+5. If `role === "university"`: calls `loadWallet(password)` from `WalletContext` to decrypt keystore
 
-### **2. components/admin/PendingApplications.jsx**
-- **What it does:** Populates all requesting universities requiring access evaluation.
-- **Props:** None
-- **useState variables:**
-  - `applications` (array): Active dataset of pending applications.
-  - `modalState` (object): Tracks `{ isOpen, type, target }` driving the confirmation prompts.
-- **Key Functions:**
-  - `handleApprove()`/`handleReject()`: Launches target-bound modal prompts.
-  - `confirmAction()`: Executes data mutation post-approval.
-- **Backend API Requirements:**
-  - **Read:** `GET /api/admin/applications/pending`
-  - **Execute:** `POST /api/admin/applications/:id/approve`
-  - **Execute:** `POST /api/admin/applications/:id/reject`
+### Wallet Decryption at Login
+- If no keystore exists in `localStorage` → `pendingPassword` is stored in `WalletContext` memory
+- `UniversityDashboard` detects `!user.wallet_address` → renders `WalletSetup` component
+- If keystore exists → `ethers.Wallet.fromEncryptedJson(keystoreJson, password)` decrypts the wallet
+- Decrypted `ethers.Wallet` object lives in `WalletContext` memory for the session
 
-### **3. components/admin/RegisteredUniversities.jsx**
-- **What it does:** Manages existing active universities modifying suspension flags globally.
-- **Props:** None
-- **useState variables:**
-  - `universities` (array): Active dataset of currently approved applications.
-  - `searchQuery` (string): Bound tracking logic for the Searchbar UI filter.
-  - `modalState` (object): Tracks `{ isOpen, type, target }` driving the confirmation prompts.
-- **Key Functions:**
-  - `handleToggleStatus()`: Passes `active` or `suspend` types parsing the specific row target.
-  - `confirmAction()`: Mutates and unbinds state resolving modal request.
-- **Backend API Requirements:**
-  - **Read:** `GET /api/admin/universities`
-  - **Execute:** `POST /api/admin/universities/:id/suspend`
-  - **Execute:** `POST /api/admin/universities/:id/reactivate`
+### Protected Routes
+- `<ProtectedRoute>` — checks `isLoggedIn` (JWT present + user object in context)
+- `<RoleRoute allowedRole="">` — checks `role` matches the route's expected role
+- Unauthorized access → redirect to `/login`
 
-### **4. components/university/Dashboard.jsx**
-- **What it does:** Renders granular University tracking outlining lifetime output and validating issued ratio health.
-- **Props:** None
-- **useState variables:** None
-- **Key Functions:** Implicit data derivations evaluating `validPercentage`.
-- **Backend API Requirements:**
-  - **Read:** `GET /api/university/stats`
-  - **Read:** `GET /api/university/certificates/recent`
-
-### **5. components/university/IssueCertificate.jsx**
-- **What it does:** Core creation flow. Takes an expected PDF upload parsing specific student identification factors mapping to generate a secure Certificate on-chain.
-- **Props:** None
-- **useState variables:**
-  - `file` (File|null): Stores active PDF DOM elements.
-  - `formData` (object): Tracks `{ studentName, degreeTitle, graduationDate }`.
-  - `success` (string|null): Retains the returned output Hash upon successful API callback.
-  - `error` (string|null): Error catching block handling UI issues.
-- **Key Functions:**
-  - `validateFile()`: Enforces > `5MB` rules blocking invalid PDF attempts.
-  - `handleSubmit()`: Binds inputs and passes payload generation logic.
-- **Backend API Requirements:**
-  - **Execute:** `POST /api/university/certificates` (Multipart/form-data)
-
-### **6. components/university/IssuedCertificates.jsx**
-- **What it does:** Allows mass-parsing of all lifetime certificates created by target university offering detailed inspect flags or severe Revokations.
-- **Props:** None
-- **useState variables:**
-  - `certificates` (array): Live dataset payload of everything issued locally.
-  - `searchHash` (string): Text string query filtering the rendered dataset row limits.
-  - `selectedIds` (array): Array grouping logic parsing bulk commands payload targeting.
-  - `showBulkConfirm` (bool): Launches independent multi-row Revoke warning dialogues.
-  - `revokeModalState`, `detailsModalState` (objects): Tracks individual row actions.
-- **Key Functions:**
-  - `toggleSelect()`, `toggleSelectAll()`: Injects active selection logic arrays.
-  - `handleBulkRevoke()`, `confirmRevoke()`: Formats API arrays mapping global state.
-- **Backend API Requirements:**
-  - **Read:** `GET /api/university/certificates`
-  - **Execute:** `POST /api/university/certificates/:hash/revoke`
-  - **Execute:** `POST /api/university/certificates/bulk-revoke`
-
-### **7. components/shared/ConfirmModal.jsx**
-- **What it does:** Unifies dialogue prompts rendering explicit warning layers.
-- **Props:** `isOpen` (bool), `title` (str), `message` (str), `confirmLabel` (str), `confirmVariant` (str: 'red'|'green'|'orange'), `onConfirm` (fn), `onCancel` (fn).
-
-### **8. components/shared/Sidebar.jsx**
-- **What it does:** Determines routing trees formatting to the distinct contextual boundaries of Admins vs Univ.
-- **Props:** `role` (str: 'admin'|'university'), `isOpen` (bool), `onClose` (fn).
-
-### **9. components/shared/StatusBadge.jsx**
-- **What it does:** Takes string prompts returning heavily stylized UI flags dictating active tracking definitions.
-- **Props:** `status` (str: 'valid'|'active'|'revoked'|'invalid'|'suspended').
-
-### **10. components/shared/ThemeToggle.jsx**
-- **What it does:** Toggles React Context pushing new HTML payload attributes resetting localized UI themes globally.
-- **Props:** `variant` (str: 'default'|'navbar'|'sidebar').
+### Logout
+- Calls `logoutAPI()` → `POST /api/auth/logout`, then clears `localStorage` + context state
 
 ---
 
-## 5. Mock Data
-Source file: `src/data/mockData.js`
+## 5. Pages
 
-**1. `mockCertificates`**
-Returns dictionary mapped exactly against target `CertificateHash`.
-- Status: `string: "valid" | "revoked"`
-- StudentName: `string: "John Doe"`
-- IssuingUniversity: `string: "Stanford University"`
-- DegreeTitle: `string: "Bachelor of Science in Computer Science"`
-- IssueDate: `string: "YYYY-MM-DD"`
-- CertificateHash: `string: "CERT123456"`
+### Public Page (`/`)
+- Certificate verification hub — publicly accessible
+- **Verify by PDF:** file input → `verifyByFileAPI()` → `POST /api/verify/file`
+- **Verify by QR (upload):** file input → `verifyByQrAPI()` → `POST /api/verify/qr`
+- **Verify by QR (camera):** uses `window.BarcodeDetector` API for live scanning → captures frame → `POST /api/verify/qr`
+- Falls back gracefully if `BarcodeDetector` not supported (prompts QR image upload instead)
+- Result states: VALID (green), REVOKED (orange), FAKE/not found (red)
 
-**2. `mockPendingApplications`**
-- ID: `integer: 1`
-- Name: `string: "Harvard University"`
-- Country: `string: "United States"`
-- Email: `string: "admin@harvard.edu"`
-- Wallet: `string: "0x742d...0bEb"`
-- RequestDate: `string: "YYYY-MM-DD"`
+### Login Page (`/login`)
+- Calls real backend `POST /api/auth/login`
+- Shows backend error details (e.g. "Account is pending approval", "Account is suspended")
+- On success: routes to `/admin/dashboard` or `/university/dashboard` based on role
 
-**3. `mockRegisteredUniversities`**
-- ID: `integer: 1`
-- Name: `string: "Stanford University"`
-- Country: `string: "United States"`
-- Status: `string: "active" | "suspended"`
-- RegisteredDate: `string: "YYYY-MM-DD"`
-- CertificatesIssued: `integer: 1247`
-- Wallet: `string: "0x1a2b...9s0t"`
+### Register Page (`/register`)
+- Calls `registerUniversityAPI()` → `POST /api/universities/register`
+- Fields: `university_name`, `country`, `email`, `password`
+- On success: shows confirmation, redirects to `/login` after 2s
 
-**4. `mockIssuedCertificates`**
-- ID: `integer: 1`
-- StudentName: `string: "John Doe"`
-- Hash: `string: "CERT123456"`
-- IssueDate: `string: "YYYY-MM-DD"`
-- Status: `string: "valid" | "revoked"`
-- DegreeTitle: `string: "Bachelor of Science in Computer Science"`
-- GraduationDate: `string: "YYYY-MM-DD"`
+### Admin Dashboard (`/admin/*`)
+- Nested routes: `dashboard`, `pending`, `universities`, `activity`
 
-**5. `mockUsers`**
-- Role: `string: "admin" | "university"`
-- Name: `string: "System Admin"`
-- Password: `string: "password"`
+### University Dashboard (`/university/*`)
+- **Wallet gate:** if `user.wallet_address` is null → renders `WalletSetup` instead of normal views
+- Nested routes: `dashboard`, `issue`, `certificates`
 
 ---
 
-## 6. Auth Flow
-**Login Initialization:**
-The `AuthContext.jsx` file houses all token routing. Upon hitting `login()` the frontend tests `<input>` matches and attempts to generate a localized object mapping bounding `user` payload states securely. 
+## 6. Components
 
-**Backend Requirements:**
-The backend must supply a Bearer Token via header routing taking standard JSON payload blocks `{ email, password }` matching the expected logic above. Upon authentication success the system must return `{ token, user: { role, name, email } }` where `role` enforces standard enum gating `admin`, `university`.
+### Admin
 
-**Storage:**
-Standard implementations rely on tracking `JWT` mappings housed strictly in `localStorage` securely. All outbound HTTP calls should natively apply `Authorization: Bearer <token>` in the application headers dynamically per session.
+**Dashboard.jsx** — `⚠️ Partial`
+- Fetches real data: pending applications count, registered universities count, suspended count
+- Charts (`Certificates Issued per Month`, `Certificate Status` pie) use empty arrays — no backend stats endpoint exists
+- Recent Activity section empty — no backend activity log endpoint
+- Notifications panel is dynamic (shows pending count, suspended count)
 
-**Logout Lifecycle:**
-Triggered via `logout()`, removing all context keys destroying payload matching natively booting the router back up the `/login` tree logic.
+**PendingApplications.jsx** — `✅ Complete`
+- Fetches from `GET /api/universities/applications` on mount
+- Approve → `PUT /api/universities/applications/{id}/approve`
+- Reject → `PUT /api/universities/applications/{id}/reject`
+- Removes entry from local list on success (no re-fetch needed)
+- Table fields: `university_name`, `country`, `email`, `register_date`
 
-**Protected Routes:**
-Standardized using `<ProtectedRoute>` logic testing for `isLoggedIn` existence and `<RoleRoute allowedRole="">` parsing the returned payloads against explicit active URL directories protecting layouts entirely.
+**RegisteredUniversities.jsx** — `✅ Complete`
+- Fetches from `GET /api/universities/all_universities` on mount
+- Suspend → `PUT /api/universities/{id}/suspend`
+- Reactivate → `PUT /api/universities/{id}/reactivate`
+- Search filters by `university_name`, `country`, `register_date`
+- Table fields: `university_name`, `country`, `status`, `register_date`, `total_certificates`, `wallet_address`
+
+**ActivityLog.jsx** — `⬜ Not integrated`
+- UI fully built with search + filter tabs
+- Uses empty `mockActivityLog = []` array — backend has no activity log endpoint
+- Will show "No Activity Found" empty state until endpoint is implemented
+
+### University
+
+**Dashboard.jsx** — `✅ Complete`
+- Fetches from `GET /api/certificates` on mount, computes stats from real data
+- Stats: total, valid (status="Issued"), revoked (status="Revoked"), issued this month
+- Shows 5 most recent certificates in a table
+
+**WalletSetup.jsx** — `✅ Complete`
+- Step 1: `ethers.Wallet.createRandom()` — generates new wallet
+- Step 2: `wallet.encrypt(password)` — Keystore V3 JSON, scrypt-hashed (~5s)
+- Step 3: Stores keystore JSON in `localStorage` (private key never stored raw)
+- Step 4: `registerWalletAPI(wallet.address)` → `PUT /api/universities/me/wallet`
+- Step 5: `refreshUser()` — re-fetches `/api/auth/me` to update JWT with wallet address
+- After success: `onComplete()` callback is called (UniversityDashboard re-renders to normal view)
+- Has manual password fallback input if `pendingPassword` was lost from memory
+
+**IssueCertificate.jsx** — `✅ Complete`
+Three-stage flow with stage labels shown to the user:
+
+| Stage | What happens |
+|-------|-------------|
+| PREPARING | `POST /api/certificates/issue` — backend hashes PDF, uploads to IPFS, returns cert_hash_bytes + encrypted_cid |
+| SIGNING | `contract.issueCertificate(cert_hash_bytes, encrypted_cid)` via ethers.js, waits for tx mining |
+| CONFIRMING | `POST /api/certificates/{id}/confirm` — backend verifies receipt, sets status="Issued" |
+
+- PDF validation: max 5MB, must be `application/pdf`
+- Wallet check: blocks issuance if `wallet === null` (session expired)
+- On success: shows QR code image (from `/issue` response) for printing on physical certificate
+
+**IssuedCertificates.jsx** — `✅ Complete`
+- Fetches from `GET /api/certificates` on mount
+- Search filters by `hashed_certificate`, `student_name`, `issue_date`
+- View button → opens `CertificateDetailsModal`
+- Revoke button → two-step flow:
+  1. `PUT /api/certificates/{id}/revoke` → gets `cert_hash_bytes`
+  2. `contract.revokeCertificate(cert_hash_bytes)` via ethers.js, waits for mining
+  3. `POST /api/certificates/{id}/revoke/confirm` → backend sets status="Revoked"
+- Note: bulk revocation was removed — each revocation requires a separate on-chain signature
+
+**CertificateDetailsModal.jsx** — `✅ Complete`
+- Displays all certificate fields: student_name, major, graduation_date, hashed_certificate, status, issue_date, tx_hash, qr_code
+
+### Shared
+
+**ConfirmModal.jsx** — `✅ Complete`
+- Props: `isOpen`, `title`, `message`, `confirmLabel`, `confirmVariant` ('red'|'green'|'orange'), `onConfirm`, `onCancel`
+
+**Sidebar.jsx** — `✅ Complete`
+- Adapts nav items to `role` ('admin' | 'university')
+- Admin links: Dashboard, Pending Applications, Registered Universities, Activity Log
+- University links: Dashboard, Issue Certificate, Issued Certificates
+
+**StatusBadge.jsx** — `✅ Complete`
+- Handles: `Issued`, `Revoked`, `Pending`, `PendingRevocation`, `Active`, `Suspended`, `valid`, `invalid`
 
 ---
 
-## 7. API Integration Guide
+## 7. API Layer (services/api.js)
 
-| # | Page/Component | Action | Method | Endpoint | Request Body | Expected Response |
-|---|----------------|--------|--------|----------|-------------|-------------------|
-| 1 | Auth | Login | POST | `/api/auth/login` | `{ email, password }` | `{ token, user: { role, name, email } }` |
-| 2 | Auth | Register University | POST | `/api/auth/register-university` | `{ name, country, email, password }` | `201 Created { message }` |
-| 3 | PublicPage | Verify Certificate | GET | `/api/certificates/:hash` | None | `{ status, hash, studentName, issuingUniversity, degreeTitle, issueDate }` |
-| 4 | Admin Dashboard | Get Global Stats | GET | `/api/admin/stats` | None | `{ validCount, revokedCount, totalUniversities, pendingApplications, suspendedUniversities }` |
-| 5 | Admin Dashboard | Get Chart Data | GET | `/api/admin/metrics/chart-data` | None | `{ monthlyData: [...], pieData: [...] }` |
-| 6 | Admin Dashboard | Get Recent Activity | GET | `/api/admin/activity` | None | `Activity[] { id, action, target, date, type }` |
-| 7 | Admin Pending | Get Pending Apps | GET | `/api/admin/applications/pending` | None | `Application[] { id, name, country, email, wallet, requestDate }` |
-| 8 | Admin Pending | Approve Application | POST | `/api/admin/applications/:id/approve` | None | `200 OK { message }` |
-| 9 | Admin Pending | Reject Application | POST | `/api/admin/applications/:id/reject` | None | `200 OK { message }` |
-| 10| Admin Unix | Get Universities | GET | `/api/admin/universities` | None | `University[] { id, name, country, status, registeredDate, certificatesIssued, wallet }` |
-| 11| Admin Unix | Suspend University| POST | `/api/admin/universities/:id/suspend` | None | `200 OK { message }` |
-| 12| Admin Unix | Reactivate Univ. | POST | `/api/admin/universities/:id/reactivate`| None | `200 OK { message }` |
-| 13| Univ Dashboard | Get Local Stats | GET | `/api/university/stats` | None | `{ total, valid, revoked, thisMonth }` |
-| 14| Univ Issue | Issue Certificate | POST | `/api/university/certificates` | `multipart/form-data (file, studentName, degreeTitle, graduationDate)` | `201 Created { hash }` |
-| 15| Univ Issued | Get Issued Certs | GET | `/api/university/certificates` | None | `Certificate[] { id, studentName, hash, issueDate, status, degreeTitle, graduationDate }` |
-| 16| Univ Issued | Revoke Certificate| POST | `/api/university/certificates/:hash/revoke`| None | `200 OK { message }` |
-| 17| Univ Issued | Bulk Revoke Certs | POST | `/api/university/certificates/bulk-revoke` | `{ hashes: ["CERT123...", ...] }` | `200 OK { message }` |
+Axios instance with:
+- `baseURL`: `VITE_API_BASE_URL`
+- `timeout`: 30s (some IPFS/blockchain endpoints are slow)
+- **Request interceptor:** automatically attaches `Authorization: Bearer <token>` header
+- **Response interceptor:** on 401 → clears auth data + redirects to `/login`
+
+### Endpoint Map
+
+| Function | Method | Path | Auth |
+|----------|--------|------|------|
+| `loginAPI(email, password)` | POST | `/api/auth/login` | Public (form-encoded) |
+| `getMeAPI()` | GET | `/api/auth/me` | JWT |
+| `logoutAPI()` | POST | `/api/auth/logout` | — |
+| `registerUniversityAPI(payload)` | POST | `/api/universities/register` | Public |
+| `getPendingApplicationsAPI()` | GET | `/api/universities/applications` | Admin |
+| `approveApplicationAPI(id)` | PUT | `/api/universities/applications/{id}/approve` | Admin |
+| `rejectApplicationAPI(id)` | PUT | `/api/universities/applications/{id}/reject` | Admin |
+| `getAllUniversitiesAPI(page, limit)` | GET | `/api/universities/all_universities` | Admin |
+| `getUniversityAPI(id)` | GET | `/api/universities/{id}` | Admin |
+| `suspendUniversityAPI(id)` | PUT | `/api/universities/{id}/suspend` | Admin |
+| `reactivateUniversityAPI(id)` | PUT | `/api/universities/{id}/reactivate` | Admin |
+| `registerWalletAPI(walletAddress)` | PUT | `/api/universities/me/wallet` | University |
+| `createCertificateAPI(payload)` | POST | `/api/certificates/issue` | University (multipart) |
+| `confirmCertificateAPI(id, txHash)` | POST | `/api/certificates/{id}/confirm` | University |
+| `listCertificatesAPI()` | GET | `/api/certificates` | University |
+| `getCertificateAPI(id)` | GET | `/api/certificates/{id}` | University |
+| `revokeCertificateAPI(id)` | PUT | `/api/certificates/{id}/revoke` | University |
+| `confirmRevocationAPI(id, txHash)` | POST | `/api/certificates/{id}/revoke/confirm` | University |
+| `verifyByFileAPI(pdfFile)` | POST | `/api/verify/file` | Public (multipart) |
+| `verifyByQrAPI(qrImageFile)` | POST | `/api/verify/qr` | Public (multipart) |
 
 ---
 
-## 8. Theme System
-The frontend has a fully implemented dark mode logic system configured identically testing attribute variables natively mapping local data context layers defining all primary rendering scopes automatically.
+## 8. Wallet & Blockchain Integration
 
-**Light Mode Defaults (`data-theme="light"`):**
+The frontend handles all on-chain signing. The backend never sees private keys.
+
+### WalletContext
+- `wallet` — `ethers.Wallet` instance (null until `loadWallet()` succeeds)
+- `loadWallet(password)` — decrypts keystore from `localStorage` using ethers.js scrypt
+- `clearWallet()` — called on logout
+- `pendingPassword` — plaintext password held in memory briefly after login, consumed by `WalletSetup`
+
+### On-chain Signing Pattern (IssueCertificate / IssuedCertificates)
+```javascript
+const provider = new ethers.JsonRpcProvider(VITE_POLYGON_RPC_URL);
+const connectedWallet = wallet.connect(provider);
+const contract = new ethers.Contract(CONTRACT_ADDRESS, TrustChainABI, connectedWallet);
+const tx = await contract.issueCertificate(cert_hash_bytes, encrypted_cid);
+await tx.wait(); // wait for mining
+// then call /confirm with tx.hash
+```
+
+### Environment Variables Required
+```
+VITE_CONTRACT_ADDRESS    — deployed TrustChain contract address on Polygon Amoy
+VITE_POLYGON_RPC_URL     — https://rpc-amoy.polygon.technology
+VITE_API_BASE_URL        — backend URL (e.g. http://localhost:8000)
+```
+
+---
+
+## 9. Theme System
+
+Fully implemented light/dark mode via CSS custom properties on `data-theme` attribute.
+
+**Light mode (`data-theme="light"`):**
 - `--primary`: `#2A52A0`
 - `--bg-app`: `#EEF2FF`
 - `--bg-card`: `#FFFFFF`
 - `--text-primary`: `#0D1B3E`
-- `--border`: `#C8D0E8`
 
-**Dark Mode Defaults (`data-theme="dark"`):**
+**Dark mode (`data-theme="dark"`):**
 - `--primary`: `#3B82F6`
 - `--bg-app`: `#0A1628`
 - `--bg-card`: `#0F2044`
 - `--text-primary`: `#E8EEFF`
-- `--border`: `#1A2A4A`
 
 ---
 
-## 9. Known Issues & Notes
-- **File Parsing Integration:** The `IssueCertificate` implementation securely tests local `<input>` payloads validating physical payload limitations prior to API calls rejecting strings >5MB. The backend will map IPFS endpoints resolving explicit DOM states post-transaction creating explicit decentralized mapping targets physically routing hashes dynamically.
-- **Frontend Authentication Status:** Context logic presently intercepts raw HTTP handling locally testing hardcoded credentials matching index payloads generating standard responses instantly avoiding network callbacks entirely. Re-hooking network logic removes basic dictionary mapping overriding token mapping locally securely mapping global outputs natively wrapping user instances contextually.
+## 10. What's Done vs What's Left
+
+### ✅ Complete
+- [x] All API calls wired to real backend (no mock data in use)
+- [x] JWT auth with automatic header injection and 401 redirect
+- [x] Wallet generation, keystore encryption, and decryption at login
+- [x] Full certificate issuance flow (3-step: backend → ethers.js sign → confirm)
+- [x] Full certificate revocation flow (2-step: backend → ethers.js sign → confirm)
+- [x] Public verification by PDF upload
+- [x] Public verification by QR image upload
+- [x] Live camera QR scanning (with graceful fallback for unsupported browsers)
+- [x] Admin: pending applications manage (approve/reject)
+- [x] Admin: registered universities manage (suspend/reactivate)
+- [x] All loading/error/empty states across all components
+- [x] Light/dark theme system
+- [x] Protected + role-based routing
+
+### ⬜ Remaining
+- [ ] **Admin dashboard charts** — certificate volume chart and pie chart are empty (no backend stats endpoint)
+- [ ] **Admin activity log** — `ActivityLog.jsx` shows empty state (no backend endpoint)
+- [ ] **Certificate download** — "Download Certificate" button present on PublicPage but not wired (backend endpoint not yet implemented)
+- [ ] **`react-hot-toast` dependency** — `RegisterPage.jsx` imports `toast` from `react-hot-toast` but the package is NOT listed in `package.json` — will crash; either install the package (`npm install react-hot-toast`) or replace with inline error state
+- [ ] **`certificateService.js` cleanup** — legacy file, no longer used, should be removed
+- [ ] **`mockData.js` cleanup** — data file no longer imported anywhere, should be removed
+
+---
+
+## 11. Known Issues & Bugs
+
+| Issue | Severity | Details |
+|-------|----------|---------|
+| `react-hot-toast` missing from package.json | 🔴 Critical | `RegisterPage.jsx` imports `toast` from `react-hot-toast` but it is not installed. App will crash on registration attempt. Fix: `npm install react-hot-toast` |
+| Certificate download button | 🟡 Medium | "⬇ Download Certificate" button on PublicPage is rendered but has no `onClick` handler — backend download endpoint not yet implemented |
+| Admin charts empty | 🟡 Medium | `Certificates Issued per Month` and `Certificate Status` charts on admin Dashboard use empty arrays. Need a backend stats endpoint or derive from existing data |
+| `certificateService.js` never used | 🟢 Low | Legacy file that duplicates functionality already in `api.js` |
+| `mockData.js` never imported | 🟢 Low | File remains in `src/data/` but nothing imports it |
+| Camera QR scan — limited browser support | 🟢 Low | `window.BarcodeDetector` is not available in Firefox. App gracefully falls back to file upload |
+
+---
+
+*TrustChain Frontend | May 2026*
