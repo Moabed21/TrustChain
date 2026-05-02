@@ -21,10 +21,7 @@ class Settings(BaseSettings):
     AES_SECRET_KEY: str = ""
     CHAIN_ID : int = ""
     GAS : int = ""
-    CORS_ORIGINS: list[str] = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ]
+    CORS_ORIGINS: list[str] = []
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
