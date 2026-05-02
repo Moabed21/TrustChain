@@ -4,7 +4,7 @@ import { Info } from 'lucide-react';
 import logo from '../assets/logo.png';
 import ThemeToggle from '../components/shared/ThemeToggle';
 import { registerUniversityAPI } from '../services/api';
-
+import toast from 'react-hot-toast';
 const RegisterPage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,8 +23,10 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check passwords match
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match");
+      toast.error("Passwords don't match");
       return;
     }
 
@@ -36,11 +38,20 @@ const RegisterPage = () => {
         email: formData.email,
         password: formData.password,
       });
+
+      // Success
+      toast.success('Registration submitted successfully!');
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
+
     } catch (err) {
-      const detail = err.response?.data?.detail || 'Registration failed. Please try again.';
-      alert(detail);
+      // Cannot connect to server
+      if (!err.response) {
+        toast.error('Cannot connect to server. Please try again.');
+      } else {
+        // Already registered uni
+        toast.error(err.response?.data?.detail || 'University already registered!');
+      }
     } finally {
       setIsSubmitting(false);
     }
