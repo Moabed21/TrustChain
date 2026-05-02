@@ -3,6 +3,9 @@ node_modules/
 backend/venv/
 .venv/
 frontend/node_modules/
+frontend/package-lock.json
+frontend/package.json
+
 
 #  Build output 
 dist/
