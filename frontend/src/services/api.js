@@ -1,169 +1,259 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+/**
+ * Endpoint groups:
+ *   AUTH          3 – login, me, logout
+ *   UNIVERSITIES  9 – register, applications, approve/reject, suspend/reactivate, wallet, list
+ *   CERTIFICATES  6 – issue, confirm, list, get, revoke, revoke/confirm
+ *   VERIFY        3 – by file, by QR
+ */
+import axios from 'axios';
 
-// ── TOKEN HELPERS ─────────────────────
-export const saveToken = (token) =>
+//axios instance to connect with the backend
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  timeout: 30000, // 30s  some endpoints (IPFS upload, blockchain) are slow
+});
+//add token to every request
+API.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+// handle the response 401 error
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAuthData(); 
+      //remove the bad token
+      if (
+        !window.location.pathname.startsWith('/login') &&
+        !window.location.pathname.startsWith('/register') &&
+        window.location.pathname !== '/'
+      ) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+//token utils
+export function storeAuthToken(token) {
   localStorage.setItem('token', token);
+}
 
-export const getToken = () =>
-  localStorage.getItem('token');
+export function getToken() {
+  return localStorage.getItem('token');
+}
 
-export const removeToken = () => {
+export function clearAuthData() {
   localStorage.removeItem('token');
-  localStorage.removeItem('role');
-  localStorage.removeItem('email');
-};
+  localStorage.removeItem('trustchain_user');
+  localStorage.removeItem('trustchain_role');
+}
+//auth api
+// post login endpoint
+export async function loginAPI(email, password) {
+  const params = new URLSearchParams();
+  params.append('username', email);
+  params.append('password', password);
 
-// ── AUTH ──────────────────────────────
+  const { data } = await API.post('/api/auth/login', params);
+  return data;
+}
+//get me endpoint
+export async function getMeAPI() {
+  const { data } = await API.get('/api/auth/me');
+  return data;
+}
 
-// 1. POST /api/auth/login
-// Type: Form Data (NOT JSON)
-// username field = email
-export const loginAPI = async (email, password) => {
+//post logout endpoint
+export async function logoutAPI() {
+  try {
+    await API.post('/api/auth/logout');
+  } finally {
+    clearAuthData();
+  }
+}
+
+//universities api
+//post register university endpoint
+export async function registerUniversityAPI(payload) {
+  const { data } = await API.post('/api/universities/register', {
+    university_name: payload.university_name,
+    country: payload.country,
+    email: payload.email,
+    password: payload.password,
+  });
+  return data;
+}
+// get pending applications endpoint
+export async function getPendingApplicationsAPI() {
+  const { data } = await API.get('/api/universities/applications');
+  return data;
+}
+
+//post approve application endpoint
+export async function approveApplicationAPI(id) {
+  const { data } = await API.put(`/api/universities/applications/${id}/approve`);
+  return data;
+}
+
+//post reject application endpoint
+export async function rejectApplicationAPI(id) {
+  const { data } = await API.put(`/api/universities/applications/${id}/reject`);
+  return data;
+}
+
+//get all universities endpoint
+export async function getAllUniversitiesAPI(page = 1, limit = 100) {
+  const { data } = await API.get('/api/universities/all_universities', {
+    params: { page, limit },
+  });
+  return data;
+}
+
+//get single university endpoint
+export async function getUniversityAPI(id) {
+  const { data } = await API.get(`/api/universities/${id}`);
+  return data;
+}
+
+//post suspend university endpoint
+
+export async function suspendUniversityAPI(id) {
+  const { data } = await API.put(`/api/universities/${id}/suspend`);
+  return data;
+}
+
+//post reactivate university endpoint
+export async function reactivateUniversityAPI(id) {
+  const { data } = await API.put(`/api/universities/${id}/reactivate`);
+  return data;
+}
+
+//post register wallet endpoint
+export async function registerWalletAPI(walletAddress) {
+  const { data } = await API.put('/api/universities/me/wallet', {
+    wallet_address: walletAddress,
+  });
+  return data;
+}
+
+//certificates api
+//post create certificate endpoint
+export async function createCertificateAPI({ student_name, major, graduation_date, pdf }) {
   const formData = new FormData();
-  formData.append('username', email);
-  formData.append('password', password);
+  formData.append('student_name', student_name);
+  formData.append('major', major);
+  formData.append('graduation_date', graduation_date);
+  formData.append('pdf', pdf);
 
-  const res = await fetch(`${BASE_URL}/api/auth/login`, {
-    method: 'POST',
-    body: formData
+  const { data } = await API.post('/api/certificates/issue', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000, // IPFS upload can be slow
   });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Login failed');
   return data;
-  // Returns: { access_token, token_type, role, email }
-};
+}
 
-// 2. GET /api/auth/me
-export const getMeAPI = async () => {
-  const res = await fetch(`${BASE_URL}/api/auth/me`, {
-    headers: { Authorization: `Bearer ${getToken()}` }
+/**
+ * POST /api/certificates/:id/confirm
+ * University-only  step 2 of issuance.
+ * Sends the MetaMask tx_hash to backend for on-chain verification.
+ * @param {string} certificateId
+ * @param {string} txHash  the transaction hash from MetaMask
+ * @returns {{ message, certificate_id, tx_hash, status }}
+ */
+export async function confirmCertificateAPI(certificateId, txHash) {
+  const { data } = await API.post(`/api/certificates/${certificateId}/confirm`, {
+    tx_hash: txHash,
   });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Session expired');
   return data;
-  // Returns: { id, email, role, status, wallet_address }
-};
+}
 
-// 3. POST /api/auth/logout
-export const logoutAPI = async () => {
-  await fetch(`${BASE_URL}/api/auth/logout`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${getToken()}` }
+/**
+ * GET /api/certificates
+ * University-only  list all certificates issued by this university.
+ * @returns {Array<{ _id, student_name, major, graduation_date, hashed_certificate, status, issue_date, tx_hash, qr_code }>}
+ */
+export async function listCertificatesAPI() {
+  const { data } = await API.get('/api/certificates');
+  return data;
+}
+
+/**
+ * GET /api/certificates/:id
+ * University-only  single certificate details.
+ * @param {string} certificateId
+ */
+export async function getCertificateAPI(certificateId) {
+  const { data } = await API.get(`/api/certificates/${certificateId}`);
+  return data;
+}
+
+/**
+ * PUT /api/certificates/:id/revoke
+ * University-only  step 1 of revocation.
+ * Marks cert as PendingRevocation, returns hash for MetaMask signing.
+ * @param {string} certificateId
+ * @returns {{ message, certificate_id, cert_hash_bytes }}
+ */
+export async function revokeCertificateAPI(certificateId) {
+  const { data } = await API.put(`/api/certificates/${certificateId}/revoke`);
+  return data;
+}
+
+/**
+ * POST /api/certificates/:id/revoke/confirm
+ * University-only  step 2 of revocation.
+ * @param {string} certificateId
+ * @param {string} txHash
+ * @returns {{ message, certificate_id, tx_hash, status }}
+ */
+export async function confirmRevocationAPI(certificateId, txHash) {
+  const { data } = await API.post(`/api/certificates/${certificateId}/revoke/confirm`, {
+    tx_hash: txHash,
   });
-  removeToken();
-};
+  return data;
+}
 
-// ── UNIVERSITIES ──────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// VERIFY  (/api/verify)
+// ═══════════════════════════════════════════════════════════════════
 
-// 4. POST /api/universities/register
-export const registerUniversityAPI = async (data) => {
-  const res = await fetch(`${BASE_URL}/api/universities/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      university_name: data.name,
-      country: data.country,
-      official_email: data.email,
-      password: data.password
-    })
+/**
+ * POST /api/verify/file
+ * Public  verify a certificate by uploading its PDF.
+ * @param {File} pdfFile
+ * @returns {{ certificate_hash, status: "VALID"|"REVOKED"|"FAKE", issuer, timestamp }}
+ */
+export async function verifyByFileAPI(pdfFile) {
+  const formData = new FormData();
+  formData.append('pdf', pdfFile);
+
+  const { data } = await API.post('/api/verify/file', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
-
-  const result = await res.json();
-  if (!res.ok) throw new Error(result.detail || 'Registration failed');
-  return result;
-  // Returns: { message }
-};
-
-// 5. GET /api/universities/applications
-export const getPendingApplicationsAPI = async () => {
-  const res = await fetch(
-    `${BASE_URL}/api/universities/applications`,
-    { headers: { Authorization: `Bearer ${getToken()}` } }
-  );
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Failed to fetch');
   return data;
-  // Returns: Array of { _id, university_name, country,
-  //   official_email, status, register_date, wallet_address }
-};
+}
 
-// 6. PUT /api/universities/applications/:id/approve
-export const approveApplicationAPI = async (id) => {
-  const res = await fetch(
-    `${BASE_URL}/api/universities/applications/${id}/approve`,
-    {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${getToken()}` }
-    }
-  );
+/**
+ * POST /api/verify/qr
+ * Public  verify a certificate by uploading a QR code image.
+ * @param {File} qrImageFile  PNG/JPG of the QR code
+ * @returns {{ certificate_hash, status: "VALID"|"REVOKED"|"FAKE", issuer, timestamp }}
+ */
+export async function verifyByQrAPI(qrImageFile) {
+  const formData = new FormData();
+  formData.append('qr_image', qrImageFile);
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Failed to approve');
+  const { data } = await API.post('/api/verify/qr', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
-  // Returns: { message }
-};
+}
 
-// 7. PUT /api/universities/applications/:id/reject
-export const rejectApplicationAPI = async (id) => {
-  const res = await fetch(
-    `${BASE_URL}/api/universities/applications/${id}/reject`,
-    {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${getToken()}` }
-    }
-  );
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Failed to reject');
-  return data;
-  // Returns: { message }
-};
-
-// 8. GET /api/universities/:id
-export const getUniversityAPI = async (id) => {
-  const res = await fetch(
-    `${BASE_URL}/api/universities/${id}`,
-    { headers: { Authorization: `Bearer ${getToken()}` } }
-  );
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Not found');
-  return data;
-  // Returns: { _id, university_name, country, official_email,
-  //   status, register_date, certificates_issued, wallet_address }
-};
-
-// 9. PUT /api/universities/:id/suspend
-export const suspendUniversityAPI = async (id) => {
-  const res = await fetch(
-    `${BASE_URL}/api/universities/${id}/suspend`,
-    {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${getToken()}` }
-    }
-  );
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Failed to suspend');
-  return data;
-  // Returns: { message }
-};
-
-// 10. PUT /api/universities/:id/reactivate
-export const reactivateUniversityAPI = async (id) => {
-  const res = await fetch(
-    `${BASE_URL}/api/universities/${id}/reactivate`,
-    {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${getToken()}` }
-    }
-  );
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || 'Failed to reactivate');
-  return data;
-  // Returns: { message }
-};
+// ─── Export the raw axios instance for edge cases ────────────────
+export default API;

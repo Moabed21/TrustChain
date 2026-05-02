@@ -73,6 +73,25 @@ async def approve_application(id:str,current_user: dict=Depends(require_admin)):
     await db.universities.insert_one(university)
     await db.applications.delete_one({"_id": ObjectId(id)})
     return {"message":"Application approved"}
+
+@router.get("/all_universities")
+#admin-only endpoint to list all registered universities for the dashboard with paging to prevent overload 
+async def get_all_universities(
+    page: int = 1,#page to return
+    limit: int = 100, #the number of universities in the page
+    current_user: dict = Depends(require_admin) #check if user is admin
+):
+    db = get_db() #no need to depend in get db it is not fastapi dependency ,depend return the function not object inside
+    skip = (page - 1) * limit # to know what intities to return example : page 2 with limit 100 will return uni 101 to 200 -> (2-1)*100 = 100 so skip firt 100 intity
+
+    universities = await db.universities.find().skip(skip).limit(limit).to_list(length=limit)
+    #uses skip and limit function to return them as written above
+    for university in universities:
+        university["_id"] = str(university["_id"]) #naming in db is _id not id
+        #convert ObjectId to string to prevent json issues
+
+    return universities
+
 @router.get("/{id}")
 async def get_university(id:str,current_user: dict=Depends(require_admin)):
     db = get_db()
@@ -159,21 +178,3 @@ async def register_wallet(body:WalletRegistration , current_user: dict = Depends
         "registered_on_chain": registered_on_chain,
         "registration_tx_hash": registration_tx
     }
-    #checked 
-@router.get("/all_universities")
-#admin-only endpoint to list all registered universities for the dashboard with paging to prevent overload 
-async def get_all_universities(
-    page: int = 1,#page to return
-    limit: int = 100, #the number of universities in the page
-    current_user: dict = Depends(require_admin) #check if user is admin
-):
-    db = get_db() #no need to depend in get db it is not fastapi dependency ,depend return the function not object inside
-    skip = (page - 1) * limit # to know what intities to return example : page 2 with limit 100 will return uni 101 to 200 -> (2-1)*100 = 100 so skip firt 100 intity
-
-    universities = await db.universities.find().skip(skip).limit(limit).to_list(length=limit)
-    #uses skip and limit function to return them as written above
-    for university in universities:
-        university["_id"] = str(university["_id"]) #naming in db is _id not id
-        #convert ObjectId to string to prevent json issues
-
-    return universities

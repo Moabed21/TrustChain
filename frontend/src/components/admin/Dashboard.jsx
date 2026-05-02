@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LineChart,
@@ -21,12 +21,53 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import {
+  getPendingApplicationsAPI,
+  getAllUniversitiesAPI,
+} from "../../services/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const [pendingApplications, setPendingApplications] = useState([]);
+  const [registeredUniversities, setRegisteredUniversities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real data from APIs on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch pending applications
+        try {
+          const apps = await getPendingApplicationsAPI();
+          setPendingApplications(Array.isArray(apps) ? apps : []);
+        } catch {
+          // no pending apps or error  keep empty
+          setPendingApplications([]);
+        }
+
+        // Fetch registered universities
+        try {
+          const unis = await getAllUniversitiesAPI();
+          setRegisteredUniversities(Array.isArray(unis) ? unis : []);
+        } catch {
+          setRegisteredUniversities([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // These stay empty until certificates API is integrated
+  const mockIssuedCertificates = [];
+  const mockMonthlyData = [];
+  const mockActivityLog = [];
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -35,10 +76,10 @@ const Dashboard = () => {
   });
 
   const validCount = mockIssuedCertificates.filter(
-    (c) => c.status === "valid",
+    (c) => c.status === "Issued",
   ).length;
   const revokedCount = mockIssuedCertificates.filter(
-    (c) => c.status === "revoked",
+    (c) => c.status === "Revoked",
   ).length;
 
   const pieData = [
@@ -65,9 +106,30 @@ const Dashboard = () => {
     }
   };
 
-  const suspendedUniversitiesCount = mockRegisteredUniversities.filter(
-    (u) => u.status === "suspended",
+  const suspendedUniversitiesCount = registeredUniversities.filter(
+    (u) => u.status === "Suspended",
   ).length;
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "300px",
+        }}
+      >
+        <Loader2
+          size={32}
+          style={{
+            color: "var(--primary)",
+            animation: "spin 1s linear infinite",
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -82,7 +144,7 @@ const Dashboard = () => {
         <div>
           <h2 style={{ fontSize: "24px", marginBottom: "8px" }}>Dashboard</h2>
           <p style={{ color: "var(--text-secondary)" }}>
-            Welcome back, {user?.name || "Admin"}
+            Welcome back, {user?.email?.split("@")[0] || "Admin"}
           </p>
         </div>
         <div style={{ color: "var(--text-muted)", fontSize: "14px" }}>
@@ -104,9 +166,7 @@ const Dashboard = () => {
             </span>
           </div>
           <div>
-            <div className="stat-number">
-              {mockRegisteredUniversities.length}
-            </div>
+            <div className="stat-number">{registeredUniversities.length}</div>
             <div className="stat-label">Total Universities</div>
           </div>
         </div>
@@ -124,7 +184,7 @@ const Dashboard = () => {
             </span>
           </div>
           <div>
-            <div className="stat-number">{mockPendingApplications.length}</div>
+            <div className="stat-number">{pendingApplications.length}</div>
             <div className="stat-label">Pending Applications</div>
           </div>
         </div>
@@ -149,7 +209,10 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: "var(--invalid-badge-bg)" }}>
+            <div
+              className="stat-icon"
+              style={{ backgroundColor: "var(--invalid-badge-bg)" }}
+            >
               <Ban color="var(--danger)" size={20} />
             </div>
             <span className="stat-trend" style={{ color: "var(--danger)" }}>
@@ -283,8 +346,8 @@ const Dashboard = () => {
                   transition: "background-color 0.2s",
                 }}
                 onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor =
-                  "var(--primary-light)")
+                  (e.currentTarget.style.backgroundColor =
+                    "var(--primary-light)")
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.backgroundColor = "transparent")
@@ -355,7 +418,7 @@ const Dashboard = () => {
               >
                 <ClipboardList size={18} style={{ marginRight: "10px" }} />
                 Review Applications
-                {mockPendingApplications.length > 0 && (
+                {pendingApplications.length > 0 && (
                   <span
                     style={{
                       background: "var(--danger)",
@@ -366,7 +429,7 @@ const Dashboard = () => {
                       marginLeft: "auto",
                     }}
                   >
-                    {mockPendingApplications.length}
+                    {pendingApplications.length}
                   </span>
                 )}
               </button>
@@ -414,7 +477,7 @@ const Dashboard = () => {
               Notifications
             </h3>
 
-            {mockPendingApplications.length > 0 && (
+            {pendingApplications.length > 0 && (
               <div
                 style={{
                   display: "flex",
@@ -439,7 +502,7 @@ const Dashboard = () => {
                       color: "var(--revoked-text)",
                     }}
                   >
-                    {mockPendingApplications.length} Applications Pending
+                    {pendingApplications.length} Applications Pending
                   </div>
                   <div
                     style={{ fontSize: "12px", color: "var(--warning-hover)" }}

@@ -1,4 +1,4 @@
-# TrustChain — Full API Documentation
+# TrustChain  Full API Documentation
 ### Base URL: `http://127.0.0.1:8000`
 ### Updated: April 28, 2026
 
@@ -37,7 +37,7 @@
 **Purpose:**
 Authenticates a user (admin or university) and returns a JWT access token.
 
-**Access:** Public — no token required
+**Access:** Public  no token required
 
 **Who Uses It:**
 - Admin logging into admin dashboard
@@ -196,7 +196,7 @@ Headers:
 **Purpose:**
 Allows a university to submit a registration application. Application goes into a pending state until admin approves or rejects it.
 
-**Access:** Public — no token required
+**Access:** Public  no token required
 
 **Who Uses It:**
 - Any university wanting to join TrustChain
@@ -586,7 +586,7 @@ Registers a university's MetaMask wallet address. Called once on first login aft
 **Access:** University only (must be Active)
 
 **Who Uses It:**
-- University portal on first login — frontend detects `wallet_address == null` and prompts MetaMask connection
+- University portal on first login  frontend detects `wallet_address == null` and prompts MetaMask connection
 
 **Internal Flow:**
 ```
@@ -653,7 +653,7 @@ Returns all registered universities for the admin dashboard. Supports pagination
 **Access:** Admin only
 
 **Who Uses It:**
-- Admin dashboard — the "Manage Universities" page that lists all universities with suspend/reactivate actions
+- Admin dashboard  the "Manage Universities" page that lists all universities with suspend/reactivate actions
 
 **Internal Flow:**
 ```
@@ -664,7 +664,7 @@ Returns all registered universities for the admin dashboard. Supports pagination
    → page 2 → skip 100 (universities 101-200)
 3. Query db.universities with skip() and limit()
 4. Convert all _id ObjectId fields to strings
-5. Return list (empty [] if no universities — not an error)
+5. Return list (empty [] if no universities  not an error)
 ```
 
 **Request:**
@@ -676,8 +676,8 @@ URL:
   GET /api/universities/all_universities?page=1&limit=100
 
 Query Parameters:
-  page:  integer (default: 1)   — which page to return
-  limit: integer (default: 100) — how many per page
+  page:  integer (default: 1)    which page to return
+  limit: integer (default: 100)  how many per page
 ```
 
 **Response:**
@@ -895,7 +895,7 @@ Initiates revocation of a certificate. Marks it as PendingRevocation.
 **Response:**
 ```json
 {
-  "message": "Certificate marked for revocation — sign the transaction on chain to complete",
+  "message": "Certificate marked for revocation  sign the transaction on chain to complete",
   "certificate_id": "64abc123",
   "cert_hash_bytes": "0xa3f8c2d1..."
 }
@@ -969,7 +969,7 @@ Health check for verify router.
 **Purpose:**
 Verifies a certificate by uploading the PDF file directly.
 
-**Access:** Public — no token required
+**Access:** Public  no token required
 
 **Internal Flow:**
 ```
@@ -1004,7 +1004,7 @@ Body:
 **Purpose:**
 Verifies a certificate by scanning its QR code image.
 
-**Access:** Public — no token required
+**Access:** Public  no token required
 
 **Internal Flow:**
 ```

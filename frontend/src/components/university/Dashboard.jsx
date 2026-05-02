@@ -5,6 +5,9 @@ import { Award, CheckCircle2, XCircle, CalendarDays, PlusCircle, LayoutList } fr
 import { useAuth } from '../../context/AuthContext';
 import StatusBadge from '../shared/StatusBadge';
 
+// TODO: Replace with real API call to fetch certificates from backend
+const mockIssuedCertificates = [];
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -17,14 +20,14 @@ const Dashboard = () => {
   });
 
   const total = mockIssuedCertificates.length;
-  const totalValid = mockIssuedCertificates.filter(c => c.status === 'valid').length;
-  const totalRevoked = mockIssuedCertificates.filter(c => c.status === 'revoked').length;
+  const totalValid = mockIssuedCertificates.filter(c => c.status === 'Issued').length;
+  const totalRevoked = mockIssuedCertificates.filter(c => c.status === 'Revoked').length;
 
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
 
   const thisMonth = mockIssuedCertificates.filter(c => {
-    const issueDate = new Date(c.issueDate);
+    const issueDate = new Date(c.issue_date);
     return issueDate.getUTCMonth() === currentMonth && issueDate.getUTCFullYear() === currentYear;
   }).length;
 
@@ -41,7 +44,7 @@ const Dashboard = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-primary)' }}>Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Welcome back, {user?.name || 'University'}</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Welcome back, {user?.email?.split('@')[0] || 'University'}</p>
         </div>
         <div className="page-date">{todayFormatted}</div>
       </div>
@@ -137,12 +140,12 @@ const Dashboard = () => {
               </thead>
               <tbody>
                 {recent.map((cert) => (
-                  <tr key={cert.id}>
-                    <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cert.studentName}</td>
+                  <tr key={cert._id}>
+                    <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cert.student_name}</td>
                     <td className="mono" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                      {cert.hash}
+                      {cert.hashed_certificate}
                     </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{cert.issueDate}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{new Date(cert.issue_date).toLocaleDateString()}</td>
                     <td>
                       <StatusBadge status={cert.status} />
                     </td>

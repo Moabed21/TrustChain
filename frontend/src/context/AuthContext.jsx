@@ -1,50 +1,105 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext } from "react";
+import {
+  loginAPI,
+  getMeAPI,
+  logoutAPI,
+  storeAuthToken,
+  clearAuthData,
+} from "../services/api";
 
 const AuthContext = createContext({
   user: null,
   role: null,
   isLoggedIn: false,
-  login: () => { },
-  logout: () => { },
+  login: () => {},
+  logout: () => {},
+  refreshUser: () => {},
+  updateUser: () => {},
 });
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('trustchain_user');
+    const saved = localStorage.getItem("trustchain_user");
     return saved ? JSON.parse(saved) : null;
   });
 
   const [role, setRole] = useState(() => {
-    return localStorage.getItem('trustchain_role');
+    return localStorage.getItem("trustchain_role");
   });
-  ///////////////////////الاشي الوحيد الي ما غيرته عشان نفوت الموقع 
-  const login = (email, password) => {
-    // TEMP: Hardcoded credentials until backend is connected
-    const users = {
-      'admin@trustchain.com': { email: 'admin@trustchain.com', role: 'admin', name: 'System Admin', password: 'password' },
-      'admin@stanford.edu': { email: 'admin@stanford.edu', role: 'university', name: 'Stanford University', password: 'password' }
+
+  // calls the real backend login endpoint then fetches the user profile
+  const login = async (email, password) => {
+    // Step 1: authenticate and get the JWT token
+    const loginData = await loginAPI(email, password);
+    storeAuthToken(loginData.access_token);
+
+    //fetch the full user profile using the token
+    const profile = await getMeAPI();
+
+    const userData = {
+      id: profile.id,
+      email: profile.email,
+      role: profile.role,
+      status: profile.status,
+      wallet_address: profile.wallet_address,
     };
 
-    const foundUser = users[email];
+    setUser(userData);
+    setRole(userData.role);
+    localStorage.setItem("trustchain_user", JSON.stringify(userData));
+    localStorage.setItem("trustchain_role", userData.role);
 
-    if (foundUser && foundUser.password === password) {
-      setUser(foundUser);
-      setRole(foundUser.role);
-      localStorage.setItem('trustchain_user', JSON.stringify(foundUser));
-      localStorage.setItem('trustchain_role', foundUser.role);
-      return foundUser.role;
-    }
-    return null;
+    return userData.role;
   };
-  const logout = () => {
+
+  // re-fetch user profile from backend
+  const refreshUser = async () => {
+    const profile = await getMeAPI();
+    const userData = {
+      id: profile.id,
+      email: profile.email,
+      role: profile.role,
+      status: profile.status,
+      wallet_address: profile.wallet_address,
+    };
+    setUser(userData);
+    setRole(userData.role);
+    localStorage.setItem("trustchain_user", JSON.stringify(userData));
+    localStorage.setItem("trustchain_role", userData.role);
+  };
+
+  // update user data locally without a network call
+  const updateUser = (newData) => {
+    setUser((prev) => {
+      const updated = { ...prev, ...newData };
+      localStorage.setItem("trustchain_user", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // calls the backend logout endpoint and clears local state
+  const logout = async () => {
+    try {
+      await logoutAPI();
+    } catch {
+      clearAuthData();
+    }
     setUser(null);
     setRole(null);
-    localStorage.removeItem('trustchain_user');
-    localStorage.removeItem('trustchain_role');
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, isLoggedIn: !!user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        role,
+        isLoggedIn: !!user,
+        login,
+        logout,
+        refreshUser,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

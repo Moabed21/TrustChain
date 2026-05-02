@@ -1,4 +1,4 @@
-# TrustChain — Backend Status
+# TrustChain  Backend Status
 
 > **Last updated:** 2026-04-27  
 > **Scope:** Backend only (FastAPI + Blockchain + Services)  
@@ -31,7 +31,7 @@ TrustChain is a blockchain-based academic certificate verification system.
 | Smart Contract | Solidity ^0.8.19 | Deployed via Remix IDE |
 | IPFS | Pinata (REST API) | Upload via `pinFileToIPFS`, fetch via gateway |
 | Auth | JWT (python-jose) | HS256, token includes sub/email/role/wallet |
-| Password | bcrypt (direct) | NOT passlib — Python 3.14 incompatibility |
+| Password | bcrypt (direct) | NOT passlib  Python 3.14 incompatibility |
 | Encryption | AES-256-GCM (cryptography lib) | For PDF bytes and IPFS CID strings |
 | Hashing | SHA-256 (hashlib) | PDF fingerprint, converted to bytes32 for contract |
 | QR | qrcode + pyzbar | Generate and decode QR images |
@@ -47,30 +47,30 @@ TrustChain is a blockchain-based academic certificate verification system.
 Graduation_Project_2/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                  ✅ Complete — lifespan, 4 routers mounted
-│   ├── config.py                ✅ Complete — 16 env vars via pydantic-settings
-│   ├── database.py              ✅ Complete — Motor client, 4 indexes, sparse wallet
+│   ├── main.py                  ✅ Complete  lifespan, 4 routers mounted
+│   ├── config.py                ✅ Complete  16 env vars via pydantic-settings
+│   ├── database.py              ✅ Complete  Motor client, 4 indexes, sparse wallet
 │   ├── middleware/
-│   │   └── auth_middleware.py   ✅ Complete — get_current_user, require_admin, require_university
+│   │   └── auth_middleware.py   ✅ Complete  get_current_user, require_admin, require_university
 │   ├── models/
-│   │   ├── user.py              ✅ Complete — UserBase, UserCreate, UserInDB, UserResponse
-│   │   ├── university.py        ✅ Complete — UniversityBase/Create/InDB/Response
-│   │   └── certificate.py       ✅ Complete — CertificateBase/Create/InDB/Response
+│   │   ├── user.py              ✅ Complete  UserBase, UserCreate, UserInDB, UserResponse
+│   │   ├── university.py        ✅ Complete  UniversityBase/Create/InDB/Response
+│   │   └── certificate.py       ✅ Complete  CertificateBase/Create/InDB/Response
 │   ├── routers/
-│   │   ├── auth.py              ✅ Complete — 3/3 endpoints (login, me, logout)
-│   │   ├── universities.py      ✅ Complete — 8/8 endpoints (register, apps, approve, reject, get, suspend, reactivate, wallet)
-│   │   ├── certificates.py      ✅ Complete — 7/7 endpoints (create, confirm, list, get, revoke, revoke/confirm)
-│   │   └── verify.py            ⬜ Stub only — placeholder root endpoint
+│   │   ├── auth.py              ✅ Complete  3/3 endpoints (login, me, logout)
+│   │   ├── universities.py      ✅ Complete  8/8 endpoints (register, apps, approve, reject, get, suspend, reactivate, wallet)
+│   │   ├── certificates.py      ✅ Complete  7/7 endpoints (create, confirm, list, get, revoke, revoke/confirm)
+│   │   └── verify.py            ⬜ Stub only  placeholder root endpoint
 │   ├── services/
-│   │   ├── hashing.py           ✅ Complete — hash_pdf(), hash_to_bytes32()
-│   │   ├── encryption.py        ✅ Complete — AES-256-GCM encrypt/decrypt for PDF + CID
-│   │   ├── ipfs.py              ✅ Complete — upload_to_ipfs(), fetch_from_ipfs()
-│   │   ├── qr.py                ✅ Complete — generate_qr(), decode_qr()
-│   │   ├── blockchain.py        ✅ Complete — 7 functions (register, issue, revoke, verify, check uni, get admin, verify receipt)
-│   │   └── funding.py           ✅ Complete — fund() sends MATIC from admin to university wallet
+│   │   ├── hashing.py           ✅ Complete  hash_pdf(), hash_to_bytes32()
+│   │   ├── encryption.py        ✅ Complete  AES-256-GCM encrypt/decrypt for PDF + CID
+│   │   ├── ipfs.py              ✅ Complete  upload_to_ipfs(), fetch_from_ipfs()
+│   │   ├── qr.py                ✅ Complete  generate_qr(), decode_qr()
+│   │   ├── blockchain.py        ✅ Complete  7 functions (register, issue, revoke, verify, check uni, get admin, verify receipt)
+│   │   └── funding.py           ✅ Complete  fund() sends MATIC from admin to university wallet
 ├── contracts/
-│   ├── TrustChain.sol           ✅ Complete — deployed on Polygon Amoy
-│   └── TrustChain_ABI.json      ✅ Complete — 6 functions + 3 events
+│   ├── TrustChain.sol           ✅ Complete  deployed on Polygon Amoy
+│   └── TrustChain_ABI.json      ✅ Complete  6 functions + 3 events
 ├── tests/
 │   ├── funding_test.py          🔄 Quick manual test script (not pytest)
 │   ├── test_auth.py             ⬜ Empty (0 bytes)
@@ -158,9 +158,9 @@ Graduation_Project_2/
 
 ---
 
-## 7. API Endpoints — 18 Total
+## 7. API Endpoints  18 Total
 
-### Auth Router — `/api/auth` ✅ 3/3
+### Auth Router  `/api/auth` ✅ 3/3
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
@@ -170,7 +170,7 @@ Graduation_Project_2/
 
 **Status gates at login:** Pending → 403, Suspended → 403, wrong password → 401
 
-### Universities Router — `/api/universities` ✅ 8/8
+### Universities Router  `/api/universities` ✅ 8/8
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
@@ -183,7 +183,7 @@ Graduation_Project_2/
 | `PUT` | `/{id}/reactivate` | Admin | Reactivate a suspended university |
 | `PUT` | `/me/wallet` | University | Register wallet + fund + on-chain register |
 
-### Certificates Router — `/api/certificates` ✅ 6/6
+### Certificates Router  `/api/certificates` ✅ 6/6
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
@@ -196,7 +196,7 @@ Graduation_Project_2/
 
 **Two-phase pattern:** Both issuance and revocation use a prepare → sign → confirm flow because MetaMask signing happens on the frontend.
 
-### Verify Router — `/api/verify` ⬜ 0/2
+### Verify Router  `/api/verify` ⬜ 0/2
 
 | Method | Path | Auth | Purpose | Status |
 |--------|------|------|---------|--------|
@@ -252,7 +252,7 @@ Graduation_Project_2/
 | `get_admin_address()` | Anyone | **Free** (view) | Get contract admin address |
 | `verify_transaction_receipt(tx_hash)` | Backend | **Free** (read) | Verify tx exists, succeeded, targets our contract |
 
-**Note:** `issue_certificate_on_chain` and `revoke_certificate_on_chain` exist in the service but are **NOT called by any router** — the current architecture has the frontend signing via MetaMask and the backend only verifying receipts via `verify_transaction_receipt`.
+**Note:** `issue_certificate_on_chain` and `revoke_certificate_on_chain` exist in the service but are **NOT called by any router**  the current architecture has the frontend signing via MetaMask and the backend only verifying receipts via `verify_transaction_receipt`.
 
 ### funding.py ✅
 | Function | Purpose |
@@ -263,7 +263,7 @@ Graduation_Project_2/
 
 ---
 
-## 9. Smart Contract — TrustChain.sol
+## 9. Smart Contract  TrustChain.sol
 
 **Deployed on:** Polygon Amoy testnet (Chain ID: 80002)  
 **Solidity version:** ^0.8.19  
@@ -305,7 +305,7 @@ CertificateRevoked(bytes32 indexed certificateHash, address indexed revokedBy)
 ### Verification Results
 | `exist` | `isRevoked` | Result |
 |---------|-------------|--------|
-| false | — | **FAKE** |
+| false |  | **FAKE** |
 | true | false | **VALID** |
 | true | true | **REVOKED** |
 
@@ -323,7 +323,7 @@ Pending → Issued → Revoked
 ### Issuance Flow (Two-Phase)
 
 ```
-Phase 1 — POST /api/certificates (backend)
+Phase 1  POST /api/certificates (backend)
 ├── 1. Validate JWT + check university is Active + has wallet
 ├── 2. Read uploaded PDF into memory
 ├── 3. hash_pdf(pdf_bytes) → SHA-256 hex string
@@ -335,7 +335,7 @@ Phase 1 — POST /api/certificates (backend)
 ├── 9. Save to MongoDB with status="Pending"
 └── 10. Return cert_hash_bytes + encrypted_cid to frontend
 
-Phase 2 — POST /api/certificates/{id}/confirm (after MetaMask)
+Phase 2  POST /api/certificates/{id}/confirm (after MetaMask)
 ├── 1. Frontend calls issueCertificate(certHash, encCid) via MetaMask
 ├── 2. Frontend sends tx_hash to /confirm endpoint
 ├── 3. verify_transaction_receipt(tx_hash) → validates on-chain
@@ -346,12 +346,12 @@ Phase 2 — POST /api/certificates/{id}/confirm (after MetaMask)
 
 ### Revocation Flow (Two-Phase)
 ```
-Phase 1 — PUT /api/certificates/{id}/revoke
+Phase 1  PUT /api/certificates/{id}/revoke
 ├── 1. Validate ownership + status is "Issued"
 ├── 2. Update status → "PendingRevocation"
 └── 3. Return cert_hash_bytes to frontend
 
-Phase 2 — POST /api/certificates/{id}/revoke/confirm
+Phase 2  POST /api/certificates/{id}/revoke/confirm
 ├── 1. Frontend calls revokeCertificate(certHash) via MetaMask
 ├── 2. Frontend sends tx_hash to /revoke/confirm endpoint
 ├── 3. verify_transaction_receipt(tx_hash) → validates on-chain
@@ -361,7 +361,7 @@ Phase 2 — POST /api/certificates/{id}/revoke/confirm
 
 ---
 
-## 11. Wallet Architecture — Solution 10
+## 11. Wallet Architecture  Solution 10
 
 **Decision:** Local Keystore (Encrypted JSON) + Auto-Funding
 
@@ -389,15 +389,15 @@ Each university manages their own wallet. The private key never touches the back
 ### Password Change
 ```
 1. New password → re-encrypts same key → new JSON saved
-2. Wallet address unchanged ✅ — no on-chain update needed
+2. Wallet address unchanged ✅  no on-chain update needed
 ```
 
 ### Key Principles
-- **Private key never sent to backend** — signing happens client-side via MetaMask
-- **Backend only stores public wallet address** — no private keys in MongoDB
-- **Each university has their own wallet** — nonce management is per-wallet, no conflicts
-- **Admin signs registerUniversity tx** — admin pays gas for whitelisting
-- **University signs issueCertificate / revokeCertificate** — university pays gas (funded by admin on first login)
+- **Private key never sent to backend**  signing happens client-side via MetaMask
+- **Backend only stores public wallet address**  no private keys in MongoDB
+- **Each university has their own wallet**  nonce management is per-wallet, no conflicts
+- **Admin signs registerUniversity tx**  admin pays gas for whitelisting
+- **University signs issueCertificate / revokeCertificate**  university pays gas (funded by admin on first login)
 
 ---
 
@@ -407,8 +407,8 @@ Each university manages their own wallet. The private key never touches the back
 |-------|-----------|
 | **Auth** | JWT with HS256, bcrypt password hashing, role-based middleware |
 | **Data at rest** | AES-256-GCM encryption for PDFs + CIDs in MongoDB |
-| **Data in transit** | Only encrypted PDFs uploaded to IPFS — plaintext never leaves backend |
-| **QR codes** | Contain encrypted CID — scanning without backend decryption is useless |
+| **Data in transit** | Only encrypted PDFs uploaded to IPFS  plaintext never leaves backend |
+| **QR codes** | Contain encrypted CID  scanning without backend decryption is useless |
 | **Blockchain** | Certificate hashes immutable, revocation on-chain, only issuing university can revoke |
 | **Wallet** | Private keys client-side only, backend verifies tx receipts post-signing |
 | **API** | Status checks at login (Pending/Suspended → 403), ownership checks on all cert operations |
@@ -449,15 +449,15 @@ Each university manages their own wallet. The private key never touches the back
 - [x] Smart contract (TrustChain.sol deployed on Polygon Amoy)
 - [x] Contract ABI JSON
 
-### ⬜ Remaining — Backend
-- [ ] **Verify router** — `POST /api/verify` (by hash) and `POST /api/verify/qr` (by QR scan)
-- [ ] **Test suite** — all 4 test files are empty (test_auth, test_certificates, test_universities, test_verify)
-- [ ] **Download endpoint** — `GET /api/certificates/{id}/download` (fetch from IPFS, decrypt, return PDF)
-- [ ] **Error handling polish** — consistent error response format across all routers
-- [ ] **API documentation** — update docs to match current endpoints (18 not 17)
-- [ ] **Dead code cleanup** — `issue_certificate_on_chain` and `revoke_certificate_on_chain` in blockchain.py are unused (frontend signs instead)
+### ⬜ Remaining  Backend
+- [ ] **Verify router**  `POST /api/verify` (by hash) and `POST /api/verify/qr` (by QR scan)
+- [ ] **Test suite**  all 4 test files are empty (test_auth, test_certificates, test_universities, test_verify)
+- [ ] **Download endpoint**  `GET /api/certificates/{id}/download` (fetch from IPFS, decrypt, return PDF)
+- [ ] **Error handling polish**  consistent error response format across all routers
+- [ ] **API documentation**  update docs to match current endpoints (18 not 17)
+- [ ] **Dead code cleanup**  `issue_certificate_on_chain` and `revoke_certificate_on_chain` in blockchain.py are unused (frontend signs instead)
 
-### ⬜ Remaining — Integration
+### ⬜ Remaining  Integration
 - [ ] Frontend ↔ Backend API integration
 - [ ] MetaMask signing flow end-to-end testing
 - [ ] Wallet Keystore JSON implementation (frontend responsibility)
@@ -469,14 +469,14 @@ Each university manages their own wallet. The private key never touches the back
 
 | Issue | Details |
 |-------|---------|
-| `passlib` broken on Python 3.14 | Use `bcrypt` directly — already done |
-| `@app.on_event` deprecated | Use `lifespan` context manager — already done |
-| `datetime.utcnow()` deprecated 3.12+ | Use `datetime.now(timezone.utc)` — already done |
-| Unused blockchain functions | `issue_certificate_on_chain` and `revoke_certificate_on_chain` exist but are never called — frontend signs via MetaMask, backend only verifies receipts |
-| `config.py` type defaults | Several `int` fields have `""` as default (e.g., `FUNDING_AMOUNT: int = ""`) — works because `.env` always provides values, but technically incorrect type hints |
+| `passlib` broken on Python 3.14 | Use `bcrypt` directly  already done |
+| `@app.on_event` deprecated | Use `lifespan` context manager  already done |
+| `datetime.utcnow()` deprecated 3.12+ | Use `datetime.now(timezone.utc)`  already done |
+| Unused blockchain functions | `issue_certificate_on_chain` and `revoke_certificate_on_chain` exist but are never called  frontend signs via MetaMask, backend only verifies receipts |
+| `config.py` type defaults | Several `int` fields have `""` as default (e.g., `FUNDING_AMOUNT: int = ""`)  works because `.env` always provides values, but technically incorrect type hints |
 | `requirements.txt` includes unused deps | `passlib`, `ipfshttpclient`, `pymongo` are listed but not used directly |
 | Test files empty | All 4 pytest test files are 0 bytes |
-| `get_applications` returns 200 with HTTPException | `raise HTTPException(status_code=200, ...)` is unusual — should be a normal return |
+| `get_applications` returns 200 with HTTPException | `raise HTTPException(status_code=200, ...)` is unusual  should be a normal return |
 
 ---
 
@@ -492,4 +492,4 @@ Each university manages their own wallet. The private key never touches the back
 
 ---
 
-*TrustChain Backend — Alqasam & Moabed | April 2026*
+*TrustChain Backend  Alqasam & Moabed | April 2026*

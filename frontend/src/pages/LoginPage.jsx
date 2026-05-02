@@ -12,20 +12,26 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    const userRole = login(email, password);
-    if (userRole) {
+    try {
+      const userRole = await login(email, password);
       if (userRole === 'admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/university/dashboard');
       }
-    } else {
-      setError('Invalid email or password');
+    } catch (err) {
+      // extract detailed error message from backend
+      const detail = err.response?.data?.detail || 'Invalid email or password';
+      setError(detail);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -214,8 +220,8 @@ const LoginPage = () => {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary w-full">
-              Login
+            <button type="submit" className="btn btn-primary w-full" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Login'}
             </button>
           </form>
 

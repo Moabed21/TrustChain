@@ -16,7 +16,7 @@ class TxConfirm(BaseModel):
     tx_hash: str
 #pydantic model to validate the tx_hash that comes from the frontend after MetaMask signing
 
-@router.post("")
+@router.post("/issue")
 #this endpoint is called by frontend when user clicks issue certificate button and does everything until returning data to frontend except blockchain tx
 async def create_certificate(
     student_name: str = Form(...),
@@ -32,11 +32,11 @@ async def create_certificate(
         raise HTTPException(status_code=403, detail="University is not active")
     #only active universities can issue certs
     if not current_user.get("wallet_address"):
-        raise HTTPException(status_code=400, detail="Wallet address not registered — connect wallet first")
+        raise HTTPException(status_code=400, detail="Wallet address not registered  connect wallet first")
     #check if the university has a wallet address to sign the certificate
 
     if not await is_university_registered(current_user["wallet_address"]):
-        raise HTTPException(status_code=403, detail="University wallet is not registered on the blockchain — contact admin")
+        raise HTTPException(status_code=403, detail="University wallet is not registered on the blockchain  contact admin")
     #verify the wallet is actually whitelisted on-chain
     #catches edge case where wallet was saved to MongoDB but on-chain registration failed
 
@@ -63,7 +63,7 @@ async def create_certificate(
     enc_cid = encrypt_cid(ipfs_cid)
     #encrypt the cid so qr code doesnt expose the ipfs address
     qr_base64 = generate_qr(enc_cid)
-    #qr code image as base64 png — printed on physical certificate
+    #qr code image as base64 png  printed on physical certificate
 
     cert_hash_bytes_hex = "0x" + cert_hash
     #0x prefix so frontend knows its hex for the smart contract bytes32 param
@@ -187,11 +187,11 @@ async def revoke_certificate(
     if certificate["university_id"] != str(current_user["_id"]):
         raise HTTPException(status_code=403, detail="This certificate belongs to another university")
     if certificate["status"] != "Issued":
-        raise HTTPException(status_code=400, detail=f"Cannot revoke — certificate status is {certificate['status']}")
+        raise HTTPException(status_code=400, detail=f"Cannot revoke  certificate status is {certificate['status']}")
     #can only revoke issued certs
 
     if not await is_university_registered(current_user["wallet_address"]):
-        raise HTTPException(status_code=403, detail="University wallet is not registered on the blockchain — contact admin")
+        raise HTTPException(status_code=403, detail="University wallet is not registered on the blockchain  contact admin")
     #same on-chain check before revocation
 
     await db.certificates.update_one(
@@ -203,7 +203,7 @@ async def revoke_certificate(
     cert_hash_bytes_hex = "0x" + certificate["hashed_certificate"]
     #frontend passes this to revokeCertificate(certHash) on the smart contract
     return {
-        "message": "Certificate marked for revocation — sign the transaction on chain to complete",
+        "message": "Certificate marked for revocation  sign the transaction on chain to complete",
         "certificate_id": certificate_id,
         "cert_hash_bytes": cert_hash_bytes_hex,
     }
@@ -222,7 +222,7 @@ async def confirm_revocation(
     if certificate["university_id"] != str(current_user["_id"]):
         raise HTTPException(status_code=403, detail="This certificate belongs to another university")
     if certificate["status"] != "PendingRevocation":
-        raise HTTPException(status_code=400, detail=f"Certificate is not pending revocation — status is {certificate['status']}")
+        raise HTTPException(status_code=400, detail=f"Certificate is not pending revocation  status is {certificate['status']}")
 
     try:
         tx_result = await verify_transaction_receipt(body.tx_hash)

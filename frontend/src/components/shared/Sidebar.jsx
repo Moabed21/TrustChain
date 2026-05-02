@@ -10,8 +10,8 @@ const Sidebar = ({ role, isOpen, onClose }) => {
   const navigate = useNavigate();
   const { user, role: userRole, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -101,7 +101,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
           color: 'var(--sidebar-text-active)',
           flexShrink: 0
         }}>
-          {user?.name?.charAt(0).toUpperCase() || 'U'}
+          {(user?.email || 'U').charAt(0).toUpperCase()}
         </div>
         <div>
           <div style={{
@@ -109,7 +109,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
             fontSize: '13px',
             fontWeight: '600',
             lineHeight: '1.2'
-          }}>{user?.name || 'User'}</div>
+          }}>{user?.email?.split('@')[0] || 'User'}</div>
           <div style={{
             color: 'var(--sidebar-text)',
             fontSize: '11px',

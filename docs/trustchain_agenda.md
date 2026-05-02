@@ -1,44 +1,44 @@
-# TrustChain — Session Agenda
+# TrustChain  Session Agenda
 ### Last updated: April 26, 2026
 
 ---
 
-## Week 1 — Setup
+## Week 1  Setup
 
-### S1 — Project scaffolding `✅ done`
+### S1  Project scaffolding `✅ done`
 - Folder structure via bash script
 - requirements.txt, .env, config.py
 - FastAPI app with lifespan context manager
 
-### S2 — Pydantic models `✅ done`
+### S2  Pydantic models `✅ done`
 - user.py, university.py, certificate.py
 - Base / Create / InDB / Response convention
 - database.py with Motor async client
 
-### S3 — Auth router `✅ done`
+### S3  Auth router `✅ done`
 - POST /login, GET /me, POST /logout
 - JWT with sub/email/role/wallet_address
 - 401 vs 403 handling, create_admin.py seed script
 
 ---
 
-## Week 2 — Core Routers
+## Week 2  Core Routers
 
-### S4 — Auth middleware + universities router `✅ done`
+### S4  Auth middleware + universities router `✅ done`
 - get_current_user, require_admin, require_university
 - POST /register, GET /applications, approve/reject, suspend/reactivate
 
 ---
 
-## Week 3 — Smart Contract + Wallet Architecture
+## Week 3  Smart Contract + Wallet Architecture
 
-### S5 — Wallet architecture decision `✅ done`
+### S5  Wallet architecture decision `✅ done`
 - Evaluated 10 wallet/gas management solutions
 - Selected Solution 10: Local Keystore (ethers.js in browser) + Auto-Funding
 - University wallets derived locally in browser, backend never sees private key
 - Backend auto-funds university wallet with MATIC on first login
 
-### S5b — Smart contract `✅ done`
+### S5b  Smart contract `✅ done`
 - TrustChain.sol written with full inline comments
 - Mappings, Certificate struct (with exists bool), modifiers, events
 - Uses bytes32 for certHash (gas efficient, compatible with ethers.js)
@@ -46,7 +46,7 @@
 - Deploys to Polygon Amoy testnet via Remix + MetaMask
 - ⚠️ Deploy from Remix, save CONTRACT_ADDRESS + ADMIN_WALLET_ADDRESS to .env
 
-### S6 — Smart contract test + verify `⬜ pending`
+### S6  Smart contract test + verify `⬜ pending`
 - Test all functions in Remix console
 - Verify registerUniversity, issueCertificate, revoke, verifyCertificate
 - Check access control (wrong caller should fail)
@@ -54,21 +54,21 @@
 
 ---
 
-## Week 4 — Services Layer
+## Week 4  Services Layer
 
-### S7 — hashing.py + encryption.py `✅ done`
+### S7  hashing.py + encryption.py `✅ done`
 - SHA-256 hashing of certificate fields (returns str hex digest)
 - AES-256-GCM encrypt/decrypt for PDF (bytes→str) and CID (str→str)
 - Fixed: padding bug in _decrypt (urlsafe_b64decode requires = padding)
 - hash_to_bytes32() converter for Web3.py bytes32 contract calls
 
-### S8 — ipfs.py + qr.py `✅ done`
+### S8  ipfs.py + qr.py `✅ done`
 - Pinata upload encrypted PDF (str → CID str)
 - Pinata fetch by CID (CID str → encrypted str)
 - QR code generation embedding encrypted CID (str → base64 PNG str)
 - QR decode utility (base64 PNG str → encrypted CID str)
 
-### S8b — config.py + funding.py + wallet endpoint `✅ done`
+### S8b  config.py + funding.py + wallet endpoint `✅ done`
 - config.py: added FUNDER_WALLET_ADDRESS, FUNDER_PRIVATE_KEY, FUNDING_AMOUNT_WEI
 - services/funding.py: sends MATIC from funder wallet to university wallet
   - get_web3(): connects to Polygon Amoy via HTTPProvider
@@ -79,7 +79,7 @@
   - Added WalletRequest model
   - Added PUT /me/wallet endpoint (saves address + triggers auto-funding)
 
-### S9 — blockchain.py `⬜ next`
+### S9  blockchain.py `⬜ next`
 - Web3.py connection to Polygon Amoy
 - Call registerUniversity (admin signs, called after university approval)
 - Call issueCertificate and revokeCertificate (university signs via frontend)
@@ -88,14 +88,14 @@
 
 ---
 
-## Week 5 — Certificates Router
+## Week 5  Certificates Router
 
-### S10 — POST /api/certificates `⬜ pending`
+### S10  POST /api/certificates `⬜ pending`
 - Full issuance flow: validate → hash → encrypt PDF → IPFS → encrypt CID → blockchain → QR → save to DB
 - Duplicate hash guard
 - Increment university total_certificates counter
 
-### S11 — Remaining certificates endpoints `⬜ pending`
+### S11  Remaining certificates endpoints `⬜ pending`
 - GET /api/certificates (list for university)
 - GET /api/certificates/{id} (details)
 - PUT /api/certificates/{id}/revoke
@@ -103,37 +103,37 @@
 
 ---
 
-## Week 6 — Verify Router
+## Week 6  Verify Router
 
-### S12 — Verify router `⬜ pending`
-- POST /api/verify — verify by hash against blockchain
-- POST /api/verify/qr — decrypt QR → decrypt CID → fetch IPFS → decrypt PDF → hash → verify
+### S12  Verify router `⬜ pending`
+- POST /api/verify  verify by hash against blockchain
+- POST /api/verify/qr  decrypt QR → decrypt CID → fetch IPFS → decrypt PDF → hash → verify
 - Return VALID / REVOKED / FAKE clearly
 
 ---
 
-## Week 7 — Testing + Polish
+## Week 7  Testing + Polish
 
-### S13 — End-to-end testing `⬜ pending`
+### S13  End-to-end testing `⬜ pending`
 - Full flow: register university → approve → connect wallet → issue cert → verify → revoke → verify again
 - Edge cases: fake cert, revoked cert, wrong role, wrong university revoking
 - Error handling and status code review
 
-### S14 — API documentation + cleanup `⬜ pending`
+### S14  API documentation + cleanup `⬜ pending`
 - Review all FastAPI /docs (Swagger) descriptions
 - Clean up any TODO / placeholder code
 - Confirm .env variables are complete and documented
 
 ---
 
-## Week 8 — Frontend Integration
+## Week 8  Frontend Integration
 
-### S15 — Frontend handoff + integration `⬜ pending`
+### S15  Frontend handoff + integration `⬜ pending`
 - Frontend team implements S10 wallet flow (guide delivered: TrustChain_Frontend_S10_Guide.md)
 - CORS setup, test React calls against live backend
 - Fix any integration issues found
 
-### S16 — Final demo prep `⬜ pending`
+### S16  Final demo prep `⬜ pending`
 - Full system demo run-through
 - Prepare sample data (test university, test certificates)
 - Confirm Amoy testnet funder wallet has enough MATIC for demo
@@ -168,7 +168,7 @@ app/
     └── blockchain.py          ⬜ next
 
 contracts/
-└── TrustChain.sol             ✅ written — ⚠️ needs deployment on Amoy
+└── TrustChain.sol             ✅ written  ⚠️ needs deployment on Amoy
 
 docs/
 └── TrustChain_Frontend_S10_Guide.md  ✅ delivered to frontend team
@@ -209,4 +209,4 @@ AES_SECRET_KEY             ✅
 
 ---
 
-*TrustChain Backend — Alqasam & Moabed | April 2026*
+*TrustChain Backend  Alqasam & Moabed | April 2026*

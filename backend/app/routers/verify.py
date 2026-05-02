@@ -59,7 +59,7 @@ async def verify_by_qr(qr_image: UploadFile = File(...)):
         #extract the data embedded in the QR code this is the AES-256-GCM encrypted CID
     except ValueError:
         raise HTTPException(status_code=400, detail="No QR code found in the uploaded image")
-    #pyzbar couldn't find a QR code pattern in the image — bad scan, wrong image, etc.
+    #pyzbar couldn't find a QR code pattern in the image  bad scan, wrong image, etc.
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"QR decode failed: {str(e)}")
 
@@ -69,7 +69,7 @@ async def verify_by_qr(qr_image: UploadFile = File(...)):
         #only our backend can do this because the AES key is in our .env
         #this is WHY we encrypt CIDs prevents anyone from going directly to IPFS
     except Exception:
-        raise HTTPException(status_code=400, detail="Failed to decrypt CID — QR data is corrupted or tampered")
+        raise HTTPException(status_code=400, detail="Failed to decrypt CID  QR data is corrupted or tampered")
     #if decryption fails the auth tag doesn't match the data was modified after encryption
 
     try:

@@ -35,4 +35,4 @@ app.include_router(verify.router,       prefix="/api/verify",       tags=["Verif
 
 @app.get("/")
 async def root():
-    return {"message": "TrustChain API is running"}
+    return {"message": "TrustChain API is running. fuck you ahmed"}

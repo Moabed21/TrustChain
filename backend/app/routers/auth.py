@@ -61,8 +61,15 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         user = await db.universities.find_one({"email": form_data.username})
         #if the not found in users collection then checks if the user is found in the universities collection
     if not user:
+        #check applications collection for pending/rejected universities
+        application = await db.applications.find_one({"email": form_data.username})
+        if application:
+            if application.get("status") == "Pending":
+                raise HTTPException(status_code=403, detail="Account is pending approval")
+            elif application.get("status") == "Rejected":
+                raise HTTPException(status_code=403, detail="Application was rejected")
         raise HTTPException(status_code=401, detail="Invalid email or password")
-        # if still not found in either collection return 401 Unauthorized error we say "email or password" not "email not found" so attackers don't know which one was wrong (better security level)
+        # if still not found in any collection return 401 Unauthorized error we say "email or password" not "email not found" so attackers don't know which one was wrong (better security level)
     if user.get("status") == "Pending":
         raise HTTPException(status_code=403, detail="Account is pending approval")
         # if the account is pending approval return 403 not approved yet

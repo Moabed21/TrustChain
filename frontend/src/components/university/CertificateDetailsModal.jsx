@@ -64,7 +64,7 @@ const CertificateDetailsModal = ({ isOpen, cert, onClose }) => {
               >
                 Student Name
               </div>
-              <div style={{ fontWeight: "500" }}>{cert.studentName}</div>
+              <div style={{ fontWeight: "500" }}>{cert.student_name}</div>
             </div>
             <div
               style={{
@@ -104,7 +104,7 @@ const CertificateDetailsModal = ({ isOpen, cert, onClose }) => {
             >
               Degree Title
             </div>
-            <div style={{ fontWeight: "500" }}>{cert.degreeTitle}</div>
+            <div style={{ fontWeight: "500" }}>{cert.major}</div>
           </div>
 
           <div
@@ -130,7 +130,7 @@ const CertificateDetailsModal = ({ isOpen, cert, onClose }) => {
               >
                 Graduation Date
               </div>
-              <div style={{ fontWeight: "500" }}>{cert.graduationDate}</div>
+              <div style={{ fontWeight: "500" }}>{cert.graduation_date}</div>
             </div>
             <div
               style={{
@@ -148,7 +148,11 @@ const CertificateDetailsModal = ({ isOpen, cert, onClose }) => {
               >
                 Issue Date
               </div>
-              <div style={{ fontWeight: "500" }}>{cert.issueDate}</div>
+              <div style={{ fontWeight: "500" }}>
+                {cert.issue_date
+                  ? new Date(cert.issue_date).toLocaleDateString()
+                  : ""}
+              </div>
             </div>
           </div>
 
@@ -169,7 +173,7 @@ const CertificateDetailsModal = ({ isOpen, cert, onClose }) => {
               Certificate Hash
             </div>
             <div className="mono" style={{ fontWeight: "500" }}>
-              {cert.hash}
+              {cert.hashed_certificate}
             </div>
           </div>
         </div>

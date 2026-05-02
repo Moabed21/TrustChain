@@ -1,4 +1,4 @@
-# TrustChain — Frontend Documentation
+# TrustChain  Frontend Documentation
 
 ## 1. Project Overview
 **What is TrustChain:**
@@ -25,27 +25,27 @@ npm run dev
 ---
 
 ## 2. Project Structure
-- `App.jsx` — Core React structure initializing Auth, Theme providers, and defining App Routes.
-- `index.css` — Standardized global styles and complex CSS variables configuring the Theme System logic.
-- `context/AuthContext.jsx` — Global state context managing active user, roles, and login/logout methods.
-- `context/ThemeContext.jsx` — Global state context tracking and toggling between `data-theme="light"` and `data-theme="dark"`.
-- `data/mockData.js` — All mocked state structures mimicking intended database functionality.
-- `pages/AdminDashboard.jsx` — Router and dynamic layout wrapper configuring the System Admin sidebar view.
-- `pages/UniversityDashboard.jsx` — Router and dynamic layout wrapper configuring the University sidebar view.
-- `pages/LoginPage.jsx` — Multi-role public authentication page.
-- `pages/PublicPage.jsx` — Root public-landing verification hub (includes Hero wrapper and certificate querying).
-- `pages/RegisterPage.jsx` — Public-facing University request registration form.
-- `components/admin/Dashboard.jsx` — Platform-wide data viz displaying university counts, line charts, and active notifications.
-- `components/admin/PendingApplications.jsx` — Datatable interface handling requests allowing approve/reject actions.
-- `components/admin/RegisteredUniversities.jsx` — Datatable managing authorized universities allowing suspend/reactivate actions.
-- `components/university/Dashboard.jsx` — Institution-specific data viz detailing individual certificate volumes.
-- `components/university/IssueCertificate.jsx` — Multi-part interface allowing PDF upload mapping to specific student metadata.
-- `components/university/IssuedCertificates.jsx` — Comprehensive datatable displaying all issued certificates with view/revoke tracking.
-- `components/university/CertificateDetailsModal.jsx` — Standalone modal parsing granular certificate payload metadata.
-- `components/shared/ConfirmModal.jsx` — Reusable, accessible unified interactive confirmation dialogue modal.
-- `components/shared/Sidebar.jsx` — Primary app navigation tree adapting nested routing contexts per user role.
-- `components/shared/StatusBadge.jsx` — Dynamic standardizing pill-shaped UI components conditionally rendering statuses.
-- `components/shared/ThemeToggle.jsx` — Navbar/Sidebar bound theme swapper toggling dark/light context.
+- `App.jsx`  Core React structure initializing Auth, Theme providers, and defining App Routes.
+- `index.css`  Standardized global styles and complex CSS variables configuring the Theme System logic.
+- `context/AuthContext.jsx`  Global state context managing active user, roles, and login/logout methods.
+- `context/ThemeContext.jsx`  Global state context tracking and toggling between `data-theme="light"` and `data-theme="dark"`.
+- `data/mockData.js`  All mocked state structures mimicking intended database functionality.
+- `pages/AdminDashboard.jsx`  Router and dynamic layout wrapper configuring the System Admin sidebar view.
+- `pages/UniversityDashboard.jsx`  Router and dynamic layout wrapper configuring the University sidebar view.
+- `pages/LoginPage.jsx`  Multi-role public authentication page.
+- `pages/PublicPage.jsx`  Root public-landing verification hub (includes Hero wrapper and certificate querying).
+- `pages/RegisterPage.jsx`  Public-facing University request registration form.
+- `components/admin/Dashboard.jsx`  Platform-wide data viz displaying university counts, line charts, and active notifications.
+- `components/admin/PendingApplications.jsx`  Datatable interface handling requests allowing approve/reject actions.
+- `components/admin/RegisteredUniversities.jsx`  Datatable managing authorized universities allowing suspend/reactivate actions.
+- `components/university/Dashboard.jsx`  Institution-specific data viz detailing individual certificate volumes.
+- `components/university/IssueCertificate.jsx`  Multi-part interface allowing PDF upload mapping to specific student metadata.
+- `components/university/IssuedCertificates.jsx`  Comprehensive datatable displaying all issued certificates with view/revoke tracking.
+- `components/university/CertificateDetailsModal.jsx`  Standalone modal parsing granular certificate payload metadata.
+- `components/shared/ConfirmModal.jsx`  Reusable, accessible unified interactive confirmation dialogue modal.
+- `components/shared/Sidebar.jsx`  Primary app navigation tree adapting nested routing contexts per user role.
+- `components/shared/StatusBadge.jsx`  Dynamic standardizing pill-shaped UI components conditionally rendering statuses.
+- `components/shared/ThemeToggle.jsx`  Navbar/Sidebar bound theme swapper toggling dark/light context.
 
 ---
 

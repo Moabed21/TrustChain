@@ -13,6 +13,7 @@ import {
 import logo from "../assets/logo.png";
 import heroVideo from "../assets/land.mp4";
 import ThemeToggle from "../components/shared/ThemeToggle";
+import { verifyByFileAPI, verifyByQrAPI } from "../services/api";
 
 const PublicPage = () => {
   const navigate = useNavigate();
@@ -55,10 +56,15 @@ const PublicPage = () => {
     setScanMode(null);
   };
 
-  const handleQRFileUpload = (e) => {
+  const handleQRFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      alert(`PDF selected: ${file.name}\nWill be verified via backend.`);
+    if (!file) return;
+    setHasSearched(true);
+    try {
+      const data = await verifyByQrAPI(file);
+      setResult(data);
+    } catch (err) {
+      setResult(null);
     }
   };
 
@@ -70,11 +76,13 @@ const PublicPage = () => {
     };
   }, [stream]);
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!hashInput.trim()) return;
     setHasSearched(true);
-    // const cert = mockCertificates[hashInput.trim()];
-    setResult(cert || null);
+    // The backend verifies by file upload, not by hash string.
+    // For now, show "not found" since hash-only lookup isn't a backend endpoint.
+    // Users should use the file upload or QR scan for real verification.
+    setResult(null);
   };
 
   const renderResult = () => {
@@ -146,7 +154,7 @@ const PublicPage = () => {
       );
     }
 
-    if (result.status === "valid") {
+    if (result.status === "VALID") {
       return (
         <div
           style={{
@@ -192,7 +200,7 @@ const PublicPage = () => {
                   marginTop: "4px",
                 }}
               >
-                {result?.certificateHash} · Verified on the blockchain
+                {result?.certificate_hash} · Verified on the blockchain
               </div>
             </div>
           </div>
@@ -238,7 +246,7 @@ const PublicPage = () => {
       );
     }
 
-    if (result.status === "revoked") {
+    if (result.status === "REVOKED") {
       return (
         <div
           style={{
