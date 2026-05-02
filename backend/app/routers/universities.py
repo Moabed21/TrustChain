@@ -39,7 +39,7 @@ async def get_applications(current_user: dict=Depends(require_admin)):
     db = get_db()
     applications = await db.applications.find({"status":"Pending"}).to_list(length=100)
     if not applications:
-        raise HTTPException(status_code=200, detail={"message":"No applications found"})
+        return [] #not httpexception so that the dashboard shows empty state
     for application in applications:
         application["_id"] = str(application["_id"])
     return applications
