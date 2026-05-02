@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
   });
 
   const login = (email, password) => {
-    const foundUser = mockUsers[email];
+
     if (foundUser && foundUser.password === password) {
       setUser(foundUser);
       setRole(foundUser.role);
