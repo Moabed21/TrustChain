@@ -17,8 +17,15 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(() => {
     return localStorage.getItem('trustchain_role');
   });
-
+  ///////////////////////الاشي الوحيد الي ما غيرته عشان نفوت الموقع 
   const login = (email, password) => {
+    // TEMP: Hardcoded credentials until backend is connected
+    const users = {
+      'admin@trustchain.com': { email: 'admin@trustchain.com', role: 'admin', name: 'System Admin', password: 'password' },
+      'admin@stanford.edu': { email: 'admin@stanford.edu', role: 'university', name: 'Stanford University', password: 'password' }
+    };
+
+    const foundUser = users[email];
 
     if (foundUser && foundUser.password === password) {
       setUser(foundUser);
@@ -29,7 +36,6 @@ export const AuthProvider = ({ children }) => {
     }
     return null;
   };
-
   const logout = () => {
     setUser(null);
     setRole(null);
