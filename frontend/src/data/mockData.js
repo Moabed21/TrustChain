@@ -1,4 +1,4 @@
-export const mockCertificates = {
+/*export const mockCertificates = {
   CERT123456: {
     status: "valid",
     studentName: "John Doe",
@@ -67,3 +67,4 @@ export const mockActivityLog = [
   { id: 11, action: "approved", target: "Columbia University", date: "2023-12-28", type: "university", actor: "Admin" },
   { id: 12, action: "revoked", target: "CERT112233", date: "2023-12-27", type: "certificate", actor: "Harvard University" },
 ];
+*/

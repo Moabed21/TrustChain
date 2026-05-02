@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Award, CheckCircle2, XCircle, CalendarDays, PlusCircle, LayoutList } from 'lucide-react';
-import { mockIssuedCertificates } from '../../data/mockData';
+
 import { useAuth } from '../../context/AuthContext';
 import StatusBadge from '../shared/StatusBadge';
 
@@ -19,10 +19,10 @@ const Dashboard = () => {
   const total = mockIssuedCertificates.length;
   const totalValid = mockIssuedCertificates.filter(c => c.status === 'valid').length;
   const totalRevoked = mockIssuedCertificates.filter(c => c.status === 'revoked').length;
-  
+
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
-  
+
   const thisMonth = mockIssuedCertificates.filter(c => {
     const issueDate = new Date(c.issueDate);
     return issueDate.getUTCMonth() === currentMonth && issueDate.getUTCFullYear() === currentYear;
@@ -30,7 +30,7 @@ const Dashboard = () => {
 
   const validPercentage = total ? Math.round((totalValid / total) * 100) : 0;
   const revokedPercentage = total ? Math.round((totalRevoked / total) * 100) : 0;
-  
+
   const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   const recent = [...mockIssuedCertificates].slice(-5).reverse();
@@ -126,30 +126,30 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Student Name</th>
-                <th>Certificate Hash</th>
-                <th>Issue Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((cert) => (
-                <tr key={cert.id}>
-                  <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cert.studentName}</td>
-                  <td className="mono" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    {cert.hash}
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{cert.issueDate}</td>
-                  <td>
-                    <StatusBadge status={cert.status} />
-                  </td>
+            <table>
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Certificate Hash</th>
+                  <th>Issue Date</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recent.map((cert) => (
+                  <tr key={cert.id}>
+                    <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cert.studentName}</td>
+                    <td className="mono" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                      {cert.hash}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{cert.issueDate}</td>
+                    <td>
+                      <StatusBadge status={cert.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

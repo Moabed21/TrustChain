@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext } from 'react';
-import { mockUsers } from '../data/mockData';
 
 const AuthContext = createContext({
   user: null,
@@ -14,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     const saved = localStorage.getItem('trustchain_user');
     return saved ? JSON.parse(saved) : null;
   });
-  
+
   const [role, setRole] = useState(() => {
     return localStorage.getItem('trustchain_role');
   });

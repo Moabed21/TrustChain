@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { CheckCircle, XCircle, ClipboardList } from 'lucide-react';
-import { mockPendingApplications } from '../../data/mockData';
+
 import ConfirmModal from '../shared/ConfirmModal';
 
 const PendingApplications = () => {
-  const [applications, setApplications] = useState([...mockPendingApplications]);
+  //remove mockdata 
+  const [applications, setApplications] = useState([]);
   const [modalState, setModalState] = useState({ isOpen: false, type: null, target: null });
 
   const handleApprove = (app) => {
@@ -18,7 +19,7 @@ const PendingApplications = () => {
   const confirmAction = () => {
     const { type, target } = modalState;
     if (type === 'approve' || type === 'reject') {
-      setApplications(prev => prev.filter(app => app.id !== target.id));
+      setApplications(prev => prev.filter(app => app._id !== target.id));
     }
     setModalState({ isOpen: false, type: null, target: null });
   };
@@ -41,55 +42,55 @@ const PendingApplications = () => {
       ) : (
         <div className="card" style={{ overflowX: 'auto' }}>
           <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>University Name</th>
-                <th>Country</th>
-                <th>Email</th>
-                <th>Wallet Address</th>
-                <th>Request Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applications.map((app) => (
-                <tr key={app.id}>
-                  <td className="font-medium">{app.name}</td>
-                  <td>{app.country}</td>
-                  <td>{app.email}</td>
-                  <td className="mono text-sm">{app.wallet}</td>
-                  <td>{app.requestDate}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button 
-                        className="btn btn-green" 
-                        style={{ padding: '6px 12px' }}
-                        onClick={() => handleApprove(app)}
-                      >
-                        <CheckCircle size={16} /> Approve
-                      </button>
-                      <button 
-                        className="btn btn-red-outline" 
-                        style={{ padding: '6px 12px' }}
-                        onClick={() => handleReject(app)}
-                      >
-                        <XCircle size={16} /> Reject
-                      </button>
-                    </div>
-                  </td>
+            <table>
+              <thead>
+                <tr>
+                  <th>University Name</th>
+                  <th>Country</th>
+                  <th>Email</th>
+                  <th>Wallet Address</th>
+                  <th>Request Date</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {applications.map((app) => (
+                  <tr key={app.id}>
+                    <td className="font-medium">{app.university_name}</td>
+                    <td>{app.country}</td>
+                    <td>{app.official_email}</td>
+                    <td className="mono text-sm">{app.wallet}</td>
+                    <td>{app.register_date}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          className="btn btn-green"
+                          style={{ padding: '6px 12px' }}
+                          onClick={() => handleApprove(app)}
+                        >
+                          <CheckCircle size={16} /> Approve
+                        </button>
+                        <button
+                          className="btn btn-red-outline"
+                          style={{ padding: '6px 12px' }}
+                          onClick={() => handleReject(app)}
+                        >
+                          <XCircle size={16} /> Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={modalState.isOpen}
         title={modalState.type === 'approve' ? 'Approve Application' : 'Reject Application'}
-        message={modalState.type === 'approve' 
+        message={modalState.type === 'approve'
           ? `Are you sure you want to approve the registration for ${modalState.target?.name}? They will be granted access to issue certificates.`
           : `Are you sure you want to reject the registration for ${modalState.target?.name}? This action cannot be undone.`
         }

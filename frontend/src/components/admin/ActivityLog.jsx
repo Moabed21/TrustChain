@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CheckCircle2, XCircle, Ban, AlertCircle, Search } from 'lucide-react';
-import { mockActivityLog } from '../../data/mockData';
+
 
 const getActionIcon = (action) => {
   switch (action) {
@@ -40,7 +40,7 @@ const ActivityLog = () => {
 
   const filtered = mockActivityLog.filter(item => {
     const matchesSearch = item.target.toLowerCase().includes(search.toLowerCase()) ||
-                          item.action.toLowerCase().includes(search.toLowerCase());
+      item.action.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filterType === 'all' || item.type === filterType;
     return matchesSearch && matchesFilter;
   });

@@ -23,13 +23,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import {
-  mockPendingApplications,
-  mockRegisteredUniversities,
-  mockIssuedCertificates,
-  mockMonthlyData,
-  mockActivityLog,
-} from "../../data/mockData";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -290,8 +283,8 @@ const Dashboard = () => {
                   transition: "background-color 0.2s",
                 }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    "var(--primary-light)")
+                (e.currentTarget.style.backgroundColor =
+                  "var(--primary-light)")
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.backgroundColor = "transparent")

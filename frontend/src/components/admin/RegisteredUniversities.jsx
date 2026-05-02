@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Ban, Play, Search } from 'lucide-react';
-import { mockRegisteredUniversities } from '../../data/mockData';
 import StatusBadge from '../shared/StatusBadge';
 import ConfirmModal from '../shared/ConfirmModal';
 
 const RegisteredUniversities = () => {
-  const [universities, setUniversities] = useState(mockRegisteredUniversities);
+
+  const [universities, setUniversities] = useState([]);
   const [modalState, setModalState] = useState({ isOpen: false, type: null, target: null });
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredUniversities = universities.filter(uni =>
-    uni.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    uni.university_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     uni.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    uni.registeredDate.toLowerCase().includes(searchQuery.toLowerCase())
+    uni.register_date.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleToggleStatus = (uni, action) => {
@@ -22,9 +22,9 @@ const RegisteredUniversities = () => {
   const confirmAction = () => {
     const { type, target } = modalState;
     if (type === 'suspend') {
-      setUniversities(prev => prev.map(uni => uni.id === target.id ? { ...uni, status: 'suspended' } : uni));
+      setUniversities(prev => prev.map(uni => uni._id === target.id ? { ...uni, status: 'suspended' } : uni));
     } else if (type === 'reactivate') {
-      setUniversities(prev => prev.map(uni => uni.id === target.id ? { ...uni, status: 'active' } : uni));
+      setUniversities(prev => prev.map(uni => uni._id === target.id ? { ...uni, status: 'active' } : uni));
     }
     setModalState({ isOpen: false, type: null, target: null });
   };
@@ -71,71 +71,71 @@ const RegisteredUniversities = () => {
 
       <div className="card" style={{ overflowX: 'auto' }}>
         <div className="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>University Name</th>
-              <th>Country</th>
-              <th>Status</th>
-              <th>Registered Date</th>
-              <th>Certificates Issued</th>
-              <th>Wallet Address</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUniversities.length === 0 ? (
+          <table>
+            <thead>
               <tr>
-                <td colSpan="7">
-                  <div className="empty-state">
-                    <div className="empty-state-icon">
-                      <Search size={28} color="var(--primary)" />
-                    </div>
-                    <p className="empty-state-title">No Results Found</p>
-                    <p className="empty-state-subtitle">Try adjusting your search query</p>
-                  </div>
-                </td>
+                <th>University Name</th>
+                <th>Country</th>
+                <th>Status</th>
+                <th>Registered Date</th>
+                <th>Certificates Issued</th>
+                <th>Wallet Address</th>
+                <th>Actions</th>
               </tr>
-            ) : (
-              filteredUniversities.map((uni) => (
-                <tr key={uni.id}>
-                  <td className="font-medium">{uni.name}</td>
-                  <td>{uni.country}</td>
-                  <td><StatusBadge status={uni.status} /></td>
-                  <td>{uni.registeredDate}</td>
-                  <td>{uni.certificatesIssued}</td>
-                  <td className="mono text-sm">{uni.wallet}</td>
-                  <td>
-                    {uni.status === 'active' ? (
-                      <button 
-                        className="btn btn-orange" 
-                        style={{ padding: '6px 12px' }}
-                        onClick={() => handleToggleStatus(uni, 'suspend')}
-                      >
-                        <Ban size={16} /> Suspend
-                      </button>
-                    ) : (
-                      <button 
-                        className="btn btn-green" 
-                        style={{ padding: '6px 12px' }}
-                        onClick={() => handleToggleStatus(uni, 'reactivate')}
-                      >
-                        <Play size={16} /> Reactivate
-                      </button>
-                    )}
+            </thead>
+            <tbody>
+              {filteredUniversities.length === 0 ? (
+                <tr>
+                  <td colSpan="7">
+                    <div className="empty-state">
+                      <div className="empty-state-icon">
+                        <Search size={28} color="var(--primary)" />
+                      </div>
+                      <p className="empty-state-title">No Results Found</p>
+                      <p className="empty-state-subtitle">Try adjusting your search query</p>
+                    </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredUniversities.map((uni) => (
+                  <tr key={uni._id}>
+                    <td className="font-medium">{uni.university_name}</td>
+                    <td>{uni.country}</td>
+                    <td><StatusBadge status={uni.status} /></td>
+                    <td>{uni.register_date}</td>
+                    <td>{uni.total_certificates}</td>
+                    <td className="mono text-sm">{uni.wallet}</td>
+                    <td>
+                      {uni.status === 'active' ? (
+                        <button
+                          className="btn btn-orange"
+                          style={{ padding: '6px 12px' }}
+                          onClick={() => handleToggleStatus(uni, 'suspend')}
+                        >
+                          <Ban size={16} /> Suspend
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-green"
+                          style={{ padding: '6px 12px' }}
+                          onClick={() => handleToggleStatus(uni, 'reactivate')}
+                        >
+                          <Play size={16} /> Reactivate
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={modalState.isOpen}
         title={modalState.type === 'suspend' ? 'Suspend University' : 'Reactivate University'}
-        message={modalState.type === 'suspend' 
+        message={modalState.type === 'suspend'
           ? `Are you sure you want to suspend ${modalState.target?.name}? They will no longer be able to issue new certificates until reactivated.`
           : `Are you sure you want to reactivate ${modalState.target?.name}? They will be able to issue certificates again.`
         }

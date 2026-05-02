@@ -9,9 +9,9 @@ const RegisterPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    university_name: '',
     country: '',
-    email: '',
+    official_email: '',
     password: '',
     confirmPassword: ''
   });
@@ -26,7 +26,7 @@ const RegisterPage = () => {
       alert("Passwords don't match");
       return;
     }
-    
+
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
@@ -103,9 +103,9 @@ const RegisterPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label className="form-label" style={labelStyle}>University Name</label>
-                  <input type="text" className="form-input" style={inputStyle} name="name" value={formData.name} onChange={handleChange} required />
+                  <input type="text" className="form-input" style={inputStyle} name="name" value={formData.university_name} onChange={handleChange} required />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label" style={labelStyle}>Country</label>
                   <input type="text" className="form-input" style={inputStyle} name="country" value={formData.country} onChange={handleChange} required />
@@ -113,7 +113,7 @@ const RegisterPage = () => {
 
                 <div className="form-group">
                   <label className="form-label" style={labelStyle}>Official Email</label>
-                  <input type="email" className="form-input" style={inputStyle} name="email" value={formData.email} onChange={handleChange} placeholder="admin@university.edu" required />
+                  <input type="email" className="form-input" style={inputStyle} name="email" value={formData.official_email} onChange={handleChange} placeholder="admin@university.edu" required />
                 </div>
 
                 <div className="form-group">
@@ -165,18 +165,18 @@ const RegisterPage = () => {
         <svg style={{
           position: 'absolute', top: '-60px', right: '-60px', opacity: 0.06
         }} width="300" height="300" viewBox="0 0 300 300">
-          <circle cx="150" cy="150" r="140" fill="none" stroke="white" strokeWidth="1"/>
-          <circle cx="150" cy="150" r="110" fill="none" stroke="white" strokeWidth="1"/>
-          <circle cx="150" cy="150" r="80" fill="none" stroke="white" strokeWidth="1"/>
-          <circle cx="150" cy="150" r="50" fill="none" stroke="white" strokeWidth="1"/>
+          <circle cx="150" cy="150" r="140" fill="none" stroke="white" strokeWidth="1" />
+          <circle cx="150" cy="150" r="110" fill="none" stroke="white" strokeWidth="1" />
+          <circle cx="150" cy="150" r="80" fill="none" stroke="white" strokeWidth="1" />
+          <circle cx="150" cy="150" r="50" fill="none" stroke="white" strokeWidth="1" />
         </svg>
 
         <svg style={{
           position: 'absolute', bottom: '-40px', left: '-40px', opacity: 0.06
         }} width="200" height="200" viewBox="0 0 200 200">
-          <circle cx="100" cy="100" r="90" fill="none" stroke="white" strokeWidth="1"/>
-          <circle cx="100" cy="100" r="65" fill="none" stroke="white" strokeWidth="1"/>
-          <circle cx="100" cy="100" r="40" fill="none" stroke="white" strokeWidth="1"/>
+          <circle cx="100" cy="100" r="90" fill="none" stroke="white" strokeWidth="1" />
+          <circle cx="100" cy="100" r="65" fill="none" stroke="white" strokeWidth="1" />
+          <circle cx="100" cy="100" r="40" fill="none" stroke="white" strokeWidth="1" />
         </svg>
 
         <img

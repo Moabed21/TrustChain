@@ -10,7 +10,6 @@ import {
   X,
   ArrowLeft,
 } from "lucide-react";
-import { mockCertificates } from "../data/mockData";
 import logo from "../assets/logo.png";
 import heroVideo from "../assets/land.mp4";
 import ThemeToggle from "../components/shared/ThemeToggle";
@@ -74,7 +73,7 @@ const PublicPage = () => {
   const handleVerify = () => {
     if (!hashInput.trim()) return;
     setHasSearched(true);
-    const cert = mockCertificates[hashInput.trim()];
+    // const cert = mockCertificates[hashInput.trim()];
     setResult(cert || null);
   };
 
@@ -538,12 +537,12 @@ const PublicPage = () => {
                             transition: "all 0.2s",
                           }}
                           onMouseEnter={(e) =>
-                            (e.currentTarget.style.background =
-                              "var(--hero-card-alt)")
+                          (e.currentTarget.style.background =
+                            "var(--hero-card-alt)")
                           }
                           onMouseLeave={(e) =>
-                            (e.currentTarget.style.background =
-                              "var(--primary)")
+                          (e.currentTarget.style.background =
+                            "var(--primary)")
                           }
                         >
                           <Camera size={16} />
@@ -716,8 +715,8 @@ const PublicPage = () => {
                           transition: "all 0.2s",
                         }}
                         onMouseEnter={(e) =>
-                          (e.currentTarget.style.background =
-                            "var(--hero-card-alt)")
+                        (e.currentTarget.style.background =
+                          "var(--hero-card-alt)")
                         }
                         onMouseLeave={(e) =>
                           (e.currentTarget.style.background = "var(--primary)")

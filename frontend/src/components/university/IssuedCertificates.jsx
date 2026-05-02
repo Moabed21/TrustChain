@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Eye, Trash2, Search, FileText as FileTextIcon } from 'lucide-react';
-import { mockIssuedCertificates } from '../../data/mockData';
 import StatusBadge from '../shared/StatusBadge';
 import ConfirmModal from '../shared/ConfirmModal';
 import CertificateDetailsModal from './CertificateDetailsModal';
 
 const IssuedCertificates = () => {
-  const [certificates, setCertificates] = useState(mockIssuedCertificates);
+  const [certificates, setCertificates] = useState([]);
   const [searchHash, setSearchHash] = useState('');
   const [revokeModalState, setRevokeModalState] = useState({ isOpen: false, target: null });
   const [selectedIds, setSelectedIds] = useState([]);
@@ -26,7 +25,7 @@ const IssuedCertificates = () => {
   };
 
   const validCerts = filteredCertificates.filter(c => c.status === 'valid');
-  const allValidSelected = validCerts.length > 0 && 
+  const allValidSelected = validCerts.length > 0 &&
     validCerts.every(c => selectedIds.includes(c.id));
 
   const toggleSelectAll = () => {
@@ -148,97 +147,97 @@ const IssuedCertificates = () => {
 
       <div className="card" style={{ overflowX: 'auto' }}>
         <div className="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th style={{ width: '48px', padding: '12px 16px' }}>
-                <input
-                  type="checkbox"
-                  checked={allValidSelected}
-                  onChange={toggleSelectAll}
-                  style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                />
-              </th>
-              <th>Student Name</th>
-              <th>Certificate Hash</th>
-              <th>Issue Date</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCertificates.length === 0 && searchHash ? (
+          <table>
+            <thead>
               <tr>
-                <td colSpan="6">
-                  <div className="empty-state">
-                    <div className="empty-state-icon">
-                      <Search size={28} color="var(--primary)" />
-                    </div>
-                    <p className="empty-state-title">No Results Found</p>
-                    <p className="empty-state-subtitle">Try searching with a different certificate hash</p>
-                  </div>
-                </td>
+                <th style={{ width: '48px', padding: '12px 16px' }}>
+                  <input
+                    type="checkbox"
+                    checked={allValidSelected}
+                    onChange={toggleSelectAll}
+                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                  />
+                </th>
+                <th>Student Name</th>
+                <th>Certificate Hash</th>
+                <th>Issue Date</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ) : filteredCertificates.length === 0 ? (
-              <tr>
-                <td colSpan="6">
-                  <div className="empty-state">
-                    <div className="empty-state-icon">
-                      <FileTextIcon size={28} color="var(--primary)" />
-                    </div>
-                    <p className="empty-state-title">No Certificates Issued Yet</p>
-                    <p className="empty-state-subtitle">Issue your first certificate to see it here</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              filteredCertificates.map((cert) => (
-                <tr key={cert.id}>
-                  <td style={{ padding: '12px 16px' }}>
-                    {cert.status === 'valid' ? (
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(cert.id)}
-                        onChange={() => toggleSelect(cert.id)}
-                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                      />
-                    ) : (
-                      <span style={{ color: 'var(--separator-muted)', fontSize: '12px' }}>—</span>
-                    )}
-                  </td>
-                  <td className="font-medium">{cert.studentName}</td>
-                  <td className="mono text-sm">{cert.hash}</td>
-                  <td>{cert.issueDate}</td>
-                  <td><StatusBadge status={cert.status} /></td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button 
-                        className="btn btn-outline" 
-                        style={{ padding: '6px 12px' }}
-                        onClick={() => handleViewDetails(cert)}
-                      >
-                        <Eye size={16} /> View Details
-                      </button>
-                      {cert.status === 'valid' && (
-                        <button 
-                          className="btn btn-red-outline" 
-                          style={{ padding: '6px 12px' }}
-                          onClick={() => handleRevoke(cert)}
-                        >
-                          <Trash2 size={16} /> Revoke
-                        </button>
-                      )}
+            </thead>
+            <tbody>
+              {filteredCertificates.length === 0 && searchHash ? (
+                <tr>
+                  <td colSpan="6">
+                    <div className="empty-state">
+                      <div className="empty-state-icon">
+                        <Search size={28} color="var(--primary)" />
+                      </div>
+                      <p className="empty-state-title">No Results Found</p>
+                      <p className="empty-state-subtitle">Try searching with a different certificate hash</p>
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : filteredCertificates.length === 0 ? (
+                <tr>
+                  <td colSpan="6">
+                    <div className="empty-state">
+                      <div className="empty-state-icon">
+                        <FileTextIcon size={28} color="var(--primary)" />
+                      </div>
+                      <p className="empty-state-title">No Certificates Issued Yet</p>
+                      <p className="empty-state-subtitle">Issue your first certificate to see it here</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredCertificates.map((cert) => (
+                  <tr key={cert.id}>
+                    <td style={{ padding: '12px 16px' }}>
+                      {cert.status === 'valid' ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(cert.id)}
+                          onChange={() => toggleSelect(cert.id)}
+                          style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                        />
+                      ) : (
+                        <span style={{ color: 'var(--separator-muted)', fontSize: '12px' }}>—</span>
+                      )}
+                    </td>
+                    <td className="font-medium">{cert.studentName}</td>
+                    <td className="mono text-sm">{cert.hash}</td>
+                    <td>{cert.issueDate}</td>
+                    <td><StatusBadge status={cert.status} /></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          className="btn btn-outline"
+                          style={{ padding: '6px 12px' }}
+                          onClick={() => handleViewDetails(cert)}
+                        >
+                          <Eye size={16} /> View Details
+                        </button>
+                        {cert.status === 'valid' && (
+                          <button
+                            className="btn btn-red-outline"
+                            style={{ padding: '6px 12px' }}
+                            onClick={() => handleRevoke(cert)}
+                          >
+                            <Trash2 size={16} /> Revoke
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={revokeModalState.isOpen}
         title="Revoke Certificate"
         message={`Are you sure you want to revoke the certificate for ${revokeModalState.target?.studentName}? This will mark the certificate as revoked on the blockchain and cannot be undone. The certificate will still be visible but will show as revoked during verification.`}
@@ -258,7 +257,7 @@ const IssuedCertificates = () => {
         onCancel={() => setShowBulkConfirm(false)}
       />
 
-      <CertificateDetailsModal 
+      <CertificateDetailsModal
         isOpen={detailsModalState.isOpen}
         cert={detailsModalState.target}
         onClose={() => setDetailsModalState({ isOpen: false, target: null })}

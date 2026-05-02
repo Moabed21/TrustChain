@@ -4,9 +4,9 @@ import { UploadCloud } from 'lucide-react';
 const IssueCertificate = () => {
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({
-    studentName: '',
-    degreeTitle: '',
-    graduationDate: ''
+    student_name: '',
+    major: '',
+    graduation_date: ''
   });
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
@@ -56,10 +56,10 @@ const IssueCertificate = () => {
 
     const randomHash = "CERT" + Math.floor(100000 + Math.random() * 900000);
     setSuccess(randomHash);
-    
+
     // In a real app we'd add to context/backend here
     // Mocking success behavior
-    setFormData({ studentName: '', degreeTitle: '', graduationDate: '' });
+    setFormData({ student_name: '', major: '', graduation_date: '' });
     setFile(null);
 
     setTimeout(() => setSuccess(null), 5000);
@@ -73,7 +73,7 @@ const IssueCertificate = () => {
       </div>
 
       <div className="card" style={{ width: '100%', maxWidth: '640px', padding: '32px' }}>
-        
+
         {success && (
           <div style={{ padding: '16px', backgroundColor: 'var(--valid-badge-bg)', color: 'var(--valid-badge-text)', borderRadius: '8px', marginBottom: '24px', textAlign: 'center', fontWeight: '500' }}>
             Certificate issued successfully! Hash: <span className="mono">{success}</span>
@@ -87,8 +87,8 @@ const IssueCertificate = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-          
-          <div 
+
+          <div
             style={{
               border: '2px dashed var(--border)',
               borderRadius: '8px',
@@ -103,11 +103,11 @@ const IssueCertificate = () => {
             onDragOver={handleDragOver}
             onClick={() => document.getElementById('file-upload').click()}
           >
-            <input 
-              id="file-upload" 
-              type="file" 
-              accept="application/pdf" 
-              style={{ display: 'none' }} 
+            <input
+              id="file-upload"
+              type="file"
+              accept="application/pdf"
+              style={{ display: 'none' }}
               onChange={handleFileChange}
             />
             <UploadCloud color={file ? 'var(--primary)' : 'var(--text-muted)'} size={40} style={{ margin: '0 auto', marginBottom: '12px' }} />
@@ -124,20 +124,20 @@ const IssueCertificate = () => {
 
           <div className="form-group">
             <label className="form-label">Student Name</label>
-            <input type="text" className="form-input" name="studentName" value={formData.studentName} onChange={handleChange} required />
+            <input type="text" className="form-input" name="student_name" value={formData.student_name} onChange={handleChange} required />
           </div>
 
           <div className="form-group">
             <label className="form-label">Degree Title</label>
-            <input type="text" className="form-input" name="degreeTitle" value={formData.degreeTitle} onChange={handleChange} placeholder="e.g., Bachelor of Science in Computer Science" required />
+            <input type="text" className="form-input" name="major" value={formData.major} onChange={handleChange} placeholder="e.g., Bachelor of Science in Computer Science" required />
           </div>
 
           <div className="form-group" style={{ marginBottom: '24px' }}>
             <label className="form-label">Graduation Date</label>
             <input
               type="date"
-              name="graduationDate"
-              value={formData.graduationDate}
+              name="graduation_date"
+              value={formData.graduation_date}
               onChange={handleChange}
               required
               lang="en"
