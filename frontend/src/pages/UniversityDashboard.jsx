@@ -7,10 +7,12 @@ import IssueCertificate from "../components/university/IssueCertificate";
 import IssuedCertificates from "../components/university/IssuedCertificates";
 import WalletSetup from "../components/university/WalletSetup";
 import { useAuth } from "../context/AuthContext";
+import { useWallet } from "../context/WalletContext";
 
 const UniversityDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  const { pendingPassword } = useWallet();
 
   //to know if the user has a wallet to check if it is first login to generate wallet
   if (!user?.wallet_address) {
@@ -38,7 +40,7 @@ const UniversityDashboard = () => {
             padding: "32px 48px",
           }}
         >
-          <WalletSetup />
+          <WalletSetup password={pendingPassword} />
         </div>
       </div>
     );

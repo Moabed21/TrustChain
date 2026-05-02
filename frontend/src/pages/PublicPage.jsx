@@ -17,19 +17,114 @@ import { verifyByFileAPI, verifyByQrAPI } from "../services/api";
 
 const PublicPage = () => {
   const navigate = useNavigate();
-  const [hashInput, setHashInput] = useState("");
   const [result, setResult] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
 
   const [scanMode, setScanMode] = useState(null);
   const [cameraError, setCameraError] = useState("");
   const [stream, setStream] = useState(null);
+  const [scanStatus, setScanStatus] = useState("idle");
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
+  const rafRef = useRef(null);
+  const detectorRef = useRef(null);
+  const scanInFlightRef = useRef(false);
+
+  const stopScanLoop = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
+
+  const verifyQrFromCameraFrame = async (canvas) => {
+    if (scanInFlightRef.current) return;
+    scanInFlightRef.current = true;
+    setScanStatus("verifying");
+    setHasSearched(true);
+    setVerifyError("");
+    try {
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((capturedBlob) => {
+          if (!capturedBlob) {
+            reject(new Error("Failed to capture camera frame"));
+            return;
+          }
+          resolve(capturedBlob);
+        }, "image/png");
+      });
+      const qrFile = new File([blob], "camera-qr.png", { type: "image/png" });
+      const data = await verifyByQrAPI(qrFile);
+      setResult(data);
+      setScanStatus("success");
+      stopCamera();
+    } catch (err) {
+      const detail =
+        err.response?.data?.detail ||
+        "Failed to verify QR code from camera. Try uploading a clear QR image.";
+      setResult(null);
+      setVerifyError(detail);
+      setScanStatus("error");
+      stopCamera();
+    } finally {
+      scanInFlightRef.current = false;
+    }
+  };
+
+  const scanCameraFrame = async () => {
+    const video = videoRef.current;
+    const detector = detectorRef.current;
+    if (!video || !detector || video.readyState < 2) {
+      rafRef.current = requestAnimationFrame(scanCameraFrame);
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      stopCamera();
+      setVerifyError("Unable to access camera frame for QR scanning.");
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    try {
+      const codes = await detector.detect(canvas);
+      if (codes.length > 0) {
+        await verifyQrFromCameraFrame(canvas);
+        return;
+      }
+    } catch {
+      stopCamera();
+      setVerifyError("Live QR scanning failed. Please upload a QR image instead.");
+      return;
+    }
+
+    rafRef.current = requestAnimationFrame(scanCameraFrame);
+  };
 
   const startCamera = async () => {
     setCameraError("");
+    setVerifyError("");
+    setScanStatus("scanning");
     try {
+      if (
+        typeof window.BarcodeDetector === "undefined" ||
+        !window.BarcodeDetector
+      ) {
+        setCameraError(
+          "Live QR scanning is not supported in this browser. Please upload a QR image instead.",
+        );
+        setScanMode("file");
+        return;
+      }
+
+      detectorRef.current = new window.BarcodeDetector({
+        formats: ["qr_code"],
+      });
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
       });
@@ -38,52 +133,89 @@ const PublicPage = () => {
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current
+              ?.play()
+              .then(() => {
+                stopScanLoop();
+                rafRef.current = requestAnimationFrame(scanCameraFrame);
+              })
+              .catch(() => {
+                stopCamera();
+                setVerifyError(
+                  "Camera started but video playback failed. Please upload a QR image.",
+                );
+                setScanStatus("error");
+              });
+          };
         }
       }, 100);
     } catch (err) {
       setCameraError(
         "Camera not available. Please upload a QR code image instead.",
       );
+      setScanStatus("error");
       setScanMode("file");
     }
   };
 
   const stopCamera = () => {
+    stopScanLoop();
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
+    detectorRef.current = null;
     setScanMode(null);
+    setScanStatus("idle");
   };
 
-  const handleQRFileUpload = async (e) => {
+  const handleVerifyByQr = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setHasSearched(true);
+    setVerifyError("");
     try {
       const data = await verifyByQrAPI(file);
       setResult(data);
     } catch (err) {
       setResult(null);
+      const detail =
+        err.response?.data?.detail ||
+        "Failed to verify QR code. Please try a clear QR image.";
+      setVerifyError(detail);
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const handleVerifyByFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setHasSearched(true);
+    setVerifyError("");
+    try {
+      const data = await verifyByFileAPI(file);
+      setResult(data);
+    } catch (err) {
+      setResult(null);
+      const detail =
+        err.response?.data?.detail ||
+        "Failed to verify certificate PDF. Please upload a valid PDF.";
+      setVerifyError(detail);
+    } finally {
+      e.target.value = "";
     }
   };
 
   useEffect(() => {
     return () => {
+      stopScanLoop();
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [stream]);
-
-  const handleVerify = async () => {
-    if (!hashInput.trim()) return;
-    setHasSearched(true);
-    // The backend verifies by file upload, not by hash string.
-    // For now, show "not found" since hash-only lookup isn't a backend endpoint.
-    // Users should use the file upload or QR scan for real verification.
-    setResult(null);
-  };
 
   const renderResult = () => {
     if (!hasSearched) return null;
@@ -134,7 +266,7 @@ const PublicPage = () => {
                   marginTop: "4px",
                 }}
               >
-                This certificate could not be found on the blockchain
+                {verifyError || "This certificate could not be found on the blockchain"}
               </div>
             </div>
           </div>
@@ -292,7 +424,7 @@ const PublicPage = () => {
                   marginTop: "4px",
                 }}
               >
-                {result?.certificateHash} · Revoked by issuing university
+                {result?.certificate_hash} · Revoked by issuing university
               </div>
             </div>
           </div>
@@ -592,7 +724,7 @@ const PublicPage = () => {
                           ref={fileInputRef}
                           type="file"
                           accept="application/pdf"
-                          onChange={handleQRFileUpload}
+                          onChange={handleVerifyByFile}
                           style={{ display: "none" }}
                         />
                       </div>
@@ -638,8 +770,29 @@ const PublicPage = () => {
                           margin: "0 0 12px",
                         }}
                       >
-                        Point camera at QR code
+                        Point camera at QR code to auto-verify
                       </p>
+                      <div
+                        style={{
+                          marginBottom: "12px",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          background:
+                            scanStatus === "verifying"
+                              ? "var(--primary-light)"
+                              : "var(--bg-app)",
+                          color:
+                            scanStatus === "verifying"
+                              ? "var(--primary)"
+                              : "var(--text-secondary)",
+                          fontSize: "12px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {scanStatus === "verifying"
+                          ? "Verifying QR..."
+                          : "Scanning for QR..."}
+                      </div>
                       <button
                         onClick={stopCamera}
                         style={{
@@ -731,13 +884,13 @@ const PublicPage = () => {
                         }
                       >
                         <Upload size={16} />
-                        Choose Certificate PDF
+                        Choose QR Image
                       </button>
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="application/pdf"
-                        onChange={handleQRFileUpload}
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        onChange={handleVerifyByQr}
                         style={{ display: "none" }}
                       />
                       <button
