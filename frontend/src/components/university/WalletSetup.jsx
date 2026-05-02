@@ -48,14 +48,16 @@ const WalletSetup = ({ password, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(-1); // -1 means not started yet, button is visible
   const [error, setError] = useState(""); // error message shown in the banner
   const [result, setResult] = useState(null); // success response from registerWalletAPI
+  const [manualPassword, setManualPassword] = useState("");
+  const effectivePassword = password || manualPassword;
 
   const handleSetupWallet = async () => {
     setError(""); // clear any previous error before retrying
     setResult(null);
 
-    // password must be passed by the parent (login page)  without it we cannot encrypt the keystore
-    if (!password) {
-      setError("Session expired  please log in again.");
+    // fallback to manual password if in-memory password was lost.
+    if (!effectivePassword) {
+      setError("Enter your password to continue wallet setup.");
       return;
     }
 
@@ -67,10 +69,10 @@ const WalletSetup = ({ password, onComplete }) => {
       const wallet = ethers.Wallet.createRandom();
 
       // step 1  encrypt the private key into a Keystore V3 JSON
-      // wallet.encrypt(password) runs: scrypt(password, salt) -> derived key -> AES-128-CTR(privateKey) + HMAC-SHA256 mac
+      // wallet.encrypt(effectivePassword) runs: scrypt(password, salt) -> derived key -> AES-128-CTR(privateKey) + HMAC-SHA256 mac
       // scrypt is slow (3-5s) to make brute-forcing the stored keystore computationally infeasible
       setCurrentStep(1);
-      const keystoreJson = await wallet.encrypt(password);
+      const keystoreJson = await wallet.encrypt(effectivePassword);
 
       // store only the encrypted keystore  the raw private key is never written to localStorage
       // the wallet address is not stored separately because it is always derivable from the keystore after decryption
@@ -449,14 +451,30 @@ const WalletSetup = ({ password, onComplete }) => {
 
         {/* action button  only shown before setup starts or after an error so user can retry */}
         {currentStep === -1 && (
-          <button
-            className="btn btn-primary w-full"
-            onClick={handleSetupWallet}
-            style={{ padding: "14px", fontSize: "15px", fontWeight: "600" }}
-          >
-            <Wallet size={18} />
-            Setup Blockchain Wallet
-          </button>
+          <>
+            {!password && (
+              <div className="form-group" style={{ textAlign: "left", marginBottom: "14px" }}>
+                <label className="form-label">Confirm Password</label>
+                <input
+                  type="password"
+                  className="form-input"
+                  value={manualPassword}
+                  onChange={(e) => setManualPassword(e.target.value)}
+                  placeholder="Enter your login password"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+            )}
+            <button
+              className="btn btn-primary w-full"
+              onClick={handleSetupWallet}
+              style={{ padding: "14px", fontSize: "15px", fontWeight: "600" }}
+            >
+              <Wallet size={18} />
+              Setup Blockchain Wallet
+            </button>
+          </>
         )}
 
         {/* info notice  explains what will happen before the user clicks */}
