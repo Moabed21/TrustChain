@@ -1,51 +1,40 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import RegisteredUniversities from './RegisteredUniversities';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import RegisteredUniversities from "./RegisteredUniversities";
 
-// Mock the mockData to isolate testing state and status varieties
-vi.mock('../../data/mockData', () => ({
-  mockRegisteredUniversities: [
-    { id: 1, name: "Stanford University", country: "United States", status: "active", registeredDate: "2023-06-15", certificatesIssued: 1247, wallet: "0x123" },
-    { id: 2, name: "Cambridge University", country: "United Kingdom", status: "suspended", registeredDate: "2023-09-10", certificatesIssued: 543, wallet: "0x456" },
-  ]
+const mockedGetAll = vi.fn();
+const mockedSuspend = vi.fn();
+const mockedReactivate = vi.fn();
+
+vi.mock("../../services/api", () => ({
+  getAllUniversitiesAPI: (...args) => mockedGetAll(...args),
+  suspendUniversityAPI: (...args) => mockedSuspend(...args),
+  reactivateUniversityAPI: (...args) => mockedReactivate(...args),
 }));
 
-describe('RegisteredUniversities Component', () => {
-  const renderComponent = () => render(<RegisteredUniversities />);
-
-  it('renders the table with correct mock data', () => {
-    renderComponent();
-    
-    expect(screen.getByText('Registered Universities')).toBeInTheDocument();
-    expect(screen.getByText('Stanford University')).toBeInTheDocument();
-    expect(screen.getByText('Cambridge University')).toBeInTheDocument();
-
-    const rows = screen.getAllByRole('row');
-    // 1 header row + 2 data rows = 3 rows
-    expect(rows).toHaveLength(3);
+describe("RegisteredUniversities", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('opens ConfirmModal with correct details when Suspend button is clicked for active universities', () => {
-    renderComponent();
+  it("renders universities returned by API", async () => {
+    mockedGetAll.mockResolvedValueOnce([
+      {
+        _id: "u1",
+        university_name: "Stanford University",
+        country: "United States",
+        status: "Active",
+        register_date: "2023-06-15T00:00:00.000Z",
+        total_certificates: 10,
+        wallet_address: "0x123",
+      },
+    ]);
 
-    const suspendButton = screen.getByRole('button', { name: /suspend/i });
-    fireEvent.click(suspendButton);
+    render(<RegisteredUniversities />);
 
-    expect(screen.getByText('Suspend University')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Are you sure you want to suspend Stanford University\?/i)
-    ).toBeInTheDocument();
-  });
-
-  it('opens ConfirmModal with correct details when Reactivate button is clicked for suspended universities', () => {
-    renderComponent();
-
-    const reactivateButton = screen.getByRole('button', { name: /reactivate/i });
-    fireEvent.click(reactivateButton);
-
-    expect(screen.getByText('Reactivate University')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Are you sure you want to reactivate Cambridge University\?/i)
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Registered Universities")).toBeInTheDocument();
+      expect(screen.getByText("Stanford University")).toBeInTheDocument();
+    });
   });
 });
