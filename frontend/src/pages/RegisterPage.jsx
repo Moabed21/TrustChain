@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Info } from 'lucide-react';
 import logo from '../assets/logo.png';
 import ThemeToggle from '../components/shared/ThemeToggle';
+import { registerUniversityAPI } from '../services/api';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     university_name: '',
     country: '',
-    official_email: '',
+    email: '',
     password: '',
     confirmPassword: ''
   });
@@ -20,7 +21,7 @@ const RegisterPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords don't match");
@@ -28,11 +29,21 @@ const RegisterPage = () => {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await registerUniversityAPI({
+        university_name: formData.university_name,
+        country: formData.country,
+        email: formData.email,
+        password: formData.password,
+      });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
-    }, 1000);
+    } catch (err) {
+      const detail = err.response?.data?.detail || 'Registration failed. Please try again.';
+      alert(detail);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputStyle = {
@@ -103,7 +114,7 @@ const RegisterPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label className="form-label" style={labelStyle}>University Name</label>
-                  <input type="text" className="form-input" style={inputStyle} name="name" value={formData.university_name} onChange={handleChange} required />
+                  <input type="text" className="form-input" style={inputStyle} name="university_name" value={formData.university_name} onChange={handleChange} required />
                 </div>
 
                 <div className="form-group">
@@ -113,7 +124,7 @@ const RegisterPage = () => {
 
                 <div className="form-group">
                   <label className="form-label" style={labelStyle}>Official Email</label>
-                  <input type="email" className="form-input" style={inputStyle} name="email" value={formData.official_email} onChange={handleChange} placeholder="admin@university.edu" required />
+                  <input type="email" className="form-input" style={inputStyle} name="email" value={formData.email} onChange={handleChange} placeholder="admin@university.edu" required />
                 </div>
 
                 <div className="form-group">
