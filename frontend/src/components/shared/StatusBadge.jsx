@@ -1,15 +1,38 @@
 import React from 'react';
 
-const StatusBadge = ({ status }) => {
-  const StatusStyles = {
-    valid: "status-valid",
-    active: "status-active",
-    revoked: "status-revoked",
-    invalid: "status-invalid",
-    suspended: "status-suspended",
-  };
+/**
+ * Maps backend status strings to CSS class names.
+ * Backend uses Title Case: "Issued", "Revoked", "Pending", "PendingRevocation", "Active", "Suspended"
+ */
+const STATUS_CLASS_MAP = {
+  // Certificate statuses
+  issued: "status-valid",
+  valid: "status-valid",       // legacy compat
+  revoked: "status-revoked",
+  pending: "status-revoked",   // pending = yellow/warning
+  pendingrevocation: "status-suspended",
 
-  const badgeClass = StatusStyles[status] || StatusStyles.invalid;
+  // University statuses
+  active: "status-active",
+  approved: "status-active",     // legacy DB records before rename to Active
+  suspended: "status-suspended",
+  rejected: "status-invalid",
+
+  // Fallback
+  invalid: "status-invalid",
+  fake: "status-invalid",
+};
+
+/** Human-readable labels for non-obvious statuses */
+const STATUS_LABEL_MAP = {
+  pendingrevocation: "Revoking…",
+  fake: "Invalid",
+};
+
+const StatusBadge = ({ status }) => {
+  const normalizedStatus = (status || '').toLowerCase().replace(/[^a-z]/g, '');
+  const badgeClass = STATUS_CLASS_MAP[normalizedStatus] || STATUS_CLASS_MAP.invalid;
+  const displayLabel = STATUS_LABEL_MAP[normalizedStatus] || status;
 
   return (
     <span 
@@ -23,7 +46,7 @@ const StatusBadge = ({ status }) => {
         textTransform: 'capitalize'
       }}
     >
-      {status}
+      {displayLabel}
     </span>
   );
 };

@@ -1,4 +1,4 @@
-export const mockCertificates = {
+/*export const mockCertificates = {
   CERT123456: {
     status: "valid",
     studentName: "John Doe",
@@ -41,3 +41,30 @@ export const mockUsers = {
   "admin@trustchain.com": { password: "password", role: "admin", name: "System Admin" },
   "admin@stanford.edu":   { password: "password", role: "university", name: "Stanford University" },
 };
+
+export const mockMonthlyData = [
+  { month: "Jan", certificates: 45 },
+  { month: "Feb", certificates: 62 },
+  { month: "Mar", certificates: 38 },
+  { month: "Apr", certificates: 89 },
+  { month: "May", certificates: 124 },
+  { month: "Jun", certificates: 97 },
+  { month: "Jul", certificates: 143 },
+  { month: "Aug", certificates: 112 },
+];
+
+export const mockActivityLog = [
+  { id: 1, action: "approved", target: "Harvard University", date: "2024-01-10", type: "university", actor: "Admin" },
+  { id: 2, action: "rejected", target: "MIT Extension", date: "2024-01-09", type: "university", actor: "Admin" },
+  { id: 3, action: "suspended", target: "Cambridge University", date: "2024-01-08", type: "university", actor: "Admin" },
+  { id: 4, action: "revoked", target: "CERT789012", date: "2024-01-07", type: "certificate", actor: "System" },
+  { id: 5, action: "approved", target: "Stanford University", date: "2024-01-06", type: "university", actor: "Admin" },
+  { id: 6, action: "approved", target: "Yale University", date: "2024-01-05", type: "university", actor: "Admin" },
+  { id: 7, action: "revoked", target: "CERT456789", date: "2024-01-04", type: "certificate", actor: "System" },
+  { id: 8, action: "approved", target: "Princeton University", date: "2024-01-03", type: "university", actor: "Admin" },
+  { id: 9, action: "suspended", target: "Oxford University", date: "2024-01-02", type: "university", actor: "Admin" },
+  { id: 10, action: "rejected", target: "Unknown Institute", date: "2024-01-01", type: "university", actor: "Admin" },
+  { id: 11, action: "approved", target: "Columbia University", date: "2023-12-28", type: "university", actor: "Admin" },
+  { id: 12, action: "revoked", target: "CERT112233", date: "2023-12-27", type: "certificate", actor: "Harvard University" },
+];
+*/

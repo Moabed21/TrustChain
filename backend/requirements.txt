@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+motor
+python-jose
+bcrypt
+python-multipart
+web3
+cryptography
+qrcode
+pillow
+pydantic
+pydantic-settings
+email-validator
+pyzbar
+httpx
+pytest

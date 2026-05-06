@@ -1,59 +1,88 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Award, CheckCircle2, XCircle, CalendarDays, PlusCircle, LayoutList, FileText } from 'lucide-react';
-import { mockIssuedCertificates } from '../../data/mockData';
-import StatusBadge from '../shared/StatusBadge';
+// Dashboard.jsx
+// university dashboard — shows stats and recent certificates
+// fetches real certificate data from backend on mount via listCertificatesAPI
+// stats (total, valid, revoked, this month) are computed from the real data
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Award, CheckCircle2, XCircle, CalendarDays, PlusCircle, LayoutList, Loader2 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { listCertificatesAPI } from "../../services/api";
+import StatusBadge from "../shared/StatusBadge";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // Make sure dynamically generated dates format exactly as requested: "Monday, March 24, 2026"
-  const todayFormatted = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const [certificates, setCertificates] = useState([]); // real data from backend
+  const [loading, setLoading] = useState(true);
+
+  // fetch all certificates for this university on mount
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      try {
+        const data = await listCertificatesAPI();
+        setCertificates(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("listCertificatesAPI failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCertificates();
+  }, []);
+
+  const todayFormatted = new Date().toLocaleDateString("en-US", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
-  const total = mockIssuedCertificates.length;
-  const totalValid = mockIssuedCertificates.filter(c => c.status === 'valid').length;
-  const totalRevoked = mockIssuedCertificates.filter(c => c.status === 'revoked').length;
-  
+  // compute stats from real data
+  const total = certificates.length;
+  const totalValid = certificates.filter((c) => c.status === "Issued").length;
+  const totalRevoked = certificates.filter((c) => c.status === "Revoked").length;
+
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
-  
-  const thisMonth = mockIssuedCertificates.filter(c => {
-    const issueDate = new Date(c.issueDate);
-    // Be careful of UTC dates causing timezone mismatch, but mockDates are "2024-05-13" so new Date() works reasonably enough for a UI exercise
-    // Especially "2024-05-13" parses as local if we just use normal JS matching. If not, it's a minor mock implementation detail.
-    // In UTC: new Date("2024-05-13") is usually parsed correctly
-    // Better safely extract via strings if we want stable behavior, but using standard methods as requested.
-    return issueDate.getUTCMonth() === currentMonth && issueDate.getUTCFullYear() === currentYear;
+  const thisMonth = certificates.filter((c) => {
+    const d = new Date(c.issue_date);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }).length;
 
   const validPercentage = total ? Math.round((totalValid / total) * 100) : 0;
   const revokedPercentage = total ? Math.round((totalRevoked / total) * 100) : 0;
-  
-  const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const currentMonthName = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-  const recent = [...mockIssuedCertificates].slice(-5).reverse();
+  // show 5 most recent certificates in the recent table
+  const recent = [...certificates].slice(-5).reverse();
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
+        <Loader2 size={32} style={{ color: "var(--primary)", animation: "spin 1s linear infinite" }} />
+      </div>
+    );
+  }
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      {/* header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-primary)' }}>Dashboard</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Welcome back, Stanford University</p>
+          <h1 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px", color: "var(--text-primary)" }}>
+            Dashboard
+          </h1>
+          <p style={{ color: "var(--text-secondary)" }}>
+            Welcome back, {user?.email?.split("@")[0] || "University"}
+          </p>
         </div>
         <div className="page-date">{todayFormatted}</div>
       </div>
 
-      {/* Stats Cards */}
+      {/* stats cards — computed from real certificate data */}
       <div className="stats-grid">
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#EAF0F8', color: '#1B3A6B' }}>
+            <div className="stat-icon" style={{ backgroundColor: "var(--stat-icon-blue-bg)", color: "var(--stat-icon-blue-text)" }}>
               <Award size={24} />
             </div>
             <span className="stat-trend">All time</span>
@@ -64,7 +93,7 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#DCFCE7', color: '#16A34A' }}>
+            <div className="stat-icon" style={{ backgroundColor: "var(--valid-badge-bg)", color: "var(--success)" }}>
               <CheckCircle2 size={24} />
             </div>
             <span className="stat-trend">{validPercentage}% of total</span>
@@ -75,7 +104,7 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}>
+            <div className="stat-icon" style={{ backgroundColor: "var(--invalid-badge-bg)", color: "var(--danger)" }}>
               <XCircle size={24} />
             </div>
             <span className="stat-trend">{revokedPercentage}% of total</span>
@@ -86,7 +115,7 @@ const Dashboard = () => {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <div className="stat-icon" style={{ backgroundColor: '#EDE9FE', color: '#7C3AED' }}>
+            <div className="stat-icon" style={{ backgroundColor: "var(--stat-icon-purple-bg)", color: "var(--stat-icon-purple-text)" }}>
               <CalendarDays size={24} />
             </div>
             <span className="stat-trend">{currentMonthName}</span>
@@ -96,24 +125,23 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* quick actions */}
       <h2 className="section-title">Quick Actions</h2>
       <div className="quick-actions">
-        {/* Navy background for the primary button per spec */}
-        <button className="btn btn-primary" style={{ backgroundColor: '#1B3A6B' }} onClick={() => navigate('/university/issue')}>
+        <button className="btn btn-primary" onClick={() => navigate("/university/issue")}>
           <PlusCircle size={16} />
           Issue New Certificate
         </button>
-        <button className="btn btn-outline" onClick={() => navigate('/university/certificates')}>
+        <button className="btn btn-outline" onClick={() => navigate("/university/certificates")}>
           <LayoutList size={16} />
           View All Certificates
         </button>
       </div>
 
-      {/* Recent Certificates */}
+      {/* recent certificates — last 5 */}
       <div className="section-header">
         <h2 className="section-title" style={{ margin: 0 }}>Recent Certificates</h2>
-        <span className="section-link" onClick={() => navigate('/university/certificates')}>
+        <span className="section-link" onClick={() => navigate("/university/certificates")}>
           View All &rarr;
         </span>
       </div>
@@ -129,30 +157,30 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Student Name</th>
-                <th>Certificate Hash</th>
-                <th>Issue Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((cert) => (
-                <tr key={cert.id}>
-                  <td style={{ fontWeight: '500', color: 'var(--text-primary)' }}>{cert.studentName}</td>
-                  <td className="mono" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    {cert.hash}
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{cert.issueDate}</td>
-                  <td>
-                    <StatusBadge status={cert.status} />
-                  </td>
+            <table>
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Certificate Hash</th>
+                  <th>Issue Date</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recent.map((cert) => (
+                  <tr key={cert._id}>
+                    <td style={{ fontWeight: "500", color: "var(--text-primary)" }}>{cert.student_name}</td>
+                    <td className="mono" style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+                      {cert.hashed_certificate}
+                    </td>
+                    <td style={{ color: "var(--text-secondary)" }}>
+                      {new Date(cert.issue_date).toLocaleDateString()}
+                    </td>
+                    <td><StatusBadge status={cert.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

@@ -1,86 +1,57 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import PublicPage from './PublicPage';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import PublicPage from "./PublicPage";
 
-vi.mock('../context/ThemeContext', () => ({
-  useTheme: () => ({ isDark: false, toggleTheme: vi.fn() })
+const mockedVerifyByFile = vi.fn();
+const mockedVerifyByQr = vi.fn();
+
+vi.mock("../services/api", () => ({
+  verifyByFileAPI: (...args) => mockedVerifyByFile(...args),
+  verifyByQrAPI: (...args) => mockedVerifyByQr(...args),
 }));
 
-// Mock specific hashes to guarantee static integration matches
-vi.mock('../services/certificateService', () => ({
-  getCertificateByHash: vi.fn((hash) => {
-    const data = {
-      CERT123456: {
-        status: 'valid',
-        studentName: 'John Doe',
-        issuingUniversity: 'Stanford University',
-        certificateHash: 'CERT123456'
-      },
-      CERT789012: {
-        status: 'revoked',
-        studentName: 'Jane Smith',
-        issuingUniversity: 'MIT',
-        certificateHash: 'CERT789012'
-      }
-    };
-
-    return data[hash] || null;
-  })
+vi.mock("../context/ThemeContext", () => ({
+  useTheme: () => ({ isDark: false, toggleTheme: vi.fn() }),
 }));
 
-describe('PublicPage Component', () => {
-  const renderPublicPage = () => render(
-    <BrowserRouter>
-      <PublicPage />
-    </BrowserRouter>
-  );
-
-  it('renders the QR scanner UI placeholder and manual hash input completely', () => {
-    renderPublicPage();
-
-    expect(screen.getByText('Scan QR Code')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /open camera/i })).toBeInTheDocument();
-
-    expect(screen.getByPlaceholderText('Enter certificate hash or ID')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /verify certificate/i })).toBeInTheDocument();
+describe("PublicPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('verifies a valid mock hash correctly and displays the native validation card', () => {
-    renderPublicPage();
+  const renderPage = () =>
+    render(
+      <BrowserRouter>
+        <PublicPage />
+      </BrowserRouter>,
+    );
 
-    const input = screen.getByPlaceholderText('Enter certificate hash or ID');
-    fireEvent.change(input, { target: { value: 'CERT123456' } });
-
-    const verifyBtn = screen.getByRole('button', { name: /verify certificate/i });
-    fireEvent.click(verifyBtn);
-
-    // The specific UI success check string
-    expect(screen.getByText('Certificate is Valid')).toBeInTheDocument();
+  it("renders verification section", () => {
+    renderPage();
+    expect(screen.getByText("Verify Certificate")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /open camera/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /upload certificate pdf/i }),
+    ).toBeInTheDocument();
   });
 
-  it('verifies a revoked hash and securely flags it identically to system requirements', () => {
-    renderPublicPage();
+  it("verifies uploaded PDF with backend API", async () => {
+    mockedVerifyByFile.mockResolvedValueOnce({
+      certificate_hash: "abc123",
+      status: "VALID",
+      issuer: "0x1",
+      timestamp: 1,
+    });
+    renderPage();
 
-    const input = screen.getByPlaceholderText('Enter certificate hash or ID');
-    fireEvent.change(input, { target: { value: 'CERT789012' } });
+    const fileInput = document.querySelector('input[type="file"][accept="application/pdf"]');
+    const pdfFile = new File(["dummy"], "cert.pdf", { type: "application/pdf" });
+    fireEvent.change(fileInput, { target: { files: [pdfFile] } });
 
-    const verifyBtn = screen.getByRole('button', { name: /verify certificate/i });
-    fireEvent.click(verifyBtn);
-
-    // Warning UI string
-    expect(screen.getByText('Certificate has been Revoked')).toBeInTheDocument();
-  });
-
-  it('evaluates completely unlisted/invalid hashes as safely disconnected from any records', () => {
-    renderPublicPage();
-
-    const input = screen.getByPlaceholderText('Enter certificate hash or ID');
-    fireEvent.change(input, { target: { value: 'UNKNOWN_HASH_123' } });
-
-    const verifyBtn = screen.getByRole('button', { name: /verify certificate/i });
-    fireEvent.click(verifyBtn);
-
-    expect(screen.getByText('Certificate Not Found')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockedVerifyByFile).toHaveBeenCalledTimes(1);
+      expect(screen.getByText("Certificate is Valid")).toBeInTheDocument();
+    });
   });
 });

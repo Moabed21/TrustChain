@@ -1,57 +1,60 @@
-import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { AuthProvider, useAuth } from './AuthContext';
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { AuthProvider, useAuth } from "./AuthContext";
 
-describe('AuthContext', () => {
-  it('Initial state should have isLoggedIn: false and user: null', () => {
+const mockedLoginAPI = vi.fn();
+const mockedGetMeAPI = vi.fn();
+const mockedLogoutAPI = vi.fn();
+const mockedStoreAuthToken = vi.fn();
+const mockedClearAuthData = vi.fn();
+
+vi.mock("../services/api", () => ({
+  loginAPI: (...args) => mockedLoginAPI(...args),
+  getMeAPI: (...args) => mockedGetMeAPI(...args),
+  logoutAPI: (...args) => mockedLogoutAPI(...args),
+  storeAuthToken: (...args) => mockedStoreAuthToken(...args),
+  clearAuthData: (...args) => mockedClearAuthData(...args),
+}));
+
+describe("AuthContext", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      },
+      writable: true,
+    });
+  });
+
+  it("starts logged out", () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     expect(result.current.isLoggedIn).toBe(false);
     expect(result.current.user).toBeNull();
-    expect(result.current.role).toBeNull();
   });
 
-  it('Calling login with admin credentials should set isLoggedIn: true and role: admin', () => {
+  it("logs in using backend APIs and sets role", async () => {
+    mockedLoginAPI.mockResolvedValueOnce({ access_token: "token123" });
+    mockedGetMeAPI.mockResolvedValueOnce({
+      id: "u1",
+      email: "admin@test.com",
+      role: "admin",
+      status: "Active",
+      wallet_address: null,
+    });
+
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    
-    act(() => {
-      const success = result.current.login('admin@trustchain.com', 'password', 'admin');
-      expect(success).toBe(true);
+
+    await act(async () => {
+      await result.current.login("admin@test.com", "secret");
     });
 
-    expect(result.current.isLoggedIn).toBe(true);
-    expect(result.current.role).toBe('admin');
-    expect(result.current.user).toEqual({ password: 'password', role: 'admin', name: 'System Admin' });
-  });
-
-  it('Calling login with university credentials should set isLoggedIn: true and role: university', () => {
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    
-    act(() => {
-      const success = result.current.login('admin@stanford.edu', 'password', 'university');
-      expect(success).toBe(true);
+    await waitFor(() => {
+      expect(result.current.isLoggedIn).toBe(true);
+      expect(result.current.role).toBe("admin");
+      expect(mockedStoreAuthToken).toHaveBeenCalledWith("token123");
     });
-
-    expect(result.current.isLoggedIn).toBe(true);
-    expect(result.current.role).toBe('university');
-  });
-
-  it('Calling logout should successfully clear the user state and set isLoggedIn: false', () => {
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    
-    act(() => {
-      // First login
-      result.current.login('admin@trustchain.com', 'password', 'admin');
-    });
-
-    expect(result.current.isLoggedIn).toBe(true);
-
-    act(() => {
-      // Then logout
-      result.current.logout();
-    });
-
-    expect(result.current.isLoggedIn).toBe(false);
-    expect(result.current.user).toBeNull();
-    expect(result.current.role).toBeNull();
   });
 });

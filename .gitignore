@@ -1,11 +1,31 @@
+#  Dependencies 
 node_modules/
+backend/venv/
+.venv/
+frontend/node_modules/
+frontend/package-lock.json
+frontend/package.json
+
+
+#  Build output 
 dist/
-.env
+
+#  Environment & Secrets 
+backend/.env
+frontend/.env
+
+#  OS & Editor 
 *.log
 .DS_Store
 .vscode/
-*/__pycache__/
-summary.md
-.venv/
+
+#  Python bytecode
+__pycache__/
+**/*.py[cod]
+*$py.class
+.pytest_cache/
+
+#  extras
+docs/summary.md
 docs/TrustChain_Frontend_S10_Guide.md
 docs/TrustChain_Wallet_Solutions.md

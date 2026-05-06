@@ -1,55 +1,82 @@
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 
-const ConfirmModal = ({ isOpen, title, message, confirmLabel, confirmVariant, onConfirm, onCancel }) => {
+const ConfirmModal = ({
+  isOpen,
+  title,
+  message,
+  confirmLabel,
+  confirmVariant,
+  onConfirm,
+  onCancel,
+}) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
 
-  // Handle escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onCancel]);
-
   let btnClass = "btn-primary";
-  if (confirmVariant === "red") btnClass = "btn-red-outline btn-outline"; // Using red outline style similar to prompt
+  if (confirmVariant === "red") btnClass = "btn-red-outline btn-outline";
   if (confirmVariant === "green") btnClass = "btn-green";
   if (confirmVariant === "orange") btnClass = "btn-orange";
 
   return (
-    <div 
+    <div
       style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         zIndex: 1000,
-        padding: '20px'
+        padding: "20px",
       }}
       onClick={onCancel}
     >
-      <div 
+      <div
         className="card"
         style={{
-          width: '100%',
-          maxWidth: '440px',
-          padding: '24px',
-          boxShadow: 'var(--shadow-modal)'
+          width: "100%",
+          maxWidth: "440px",
+          padding: "24px",
+          boxShadow: "var(--shadow-modal)",
         }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ marginBottom: '12px', fontSize: '18px' }}>{title}</h3>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' }}>
+        <h3 style={{ marginBottom: "12px", fontSize: "18px" }}>{title}</h3>
+        <p
+          style={{
+            color: "var(--text-secondary)",
+            marginBottom: "24px",
+            fontSize: "14px",
+          }}
+        >
           {message}
         </p>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div
+          style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}
+        >
           <button className="btn btn-outline" onClick={onCancel}>
             Cancel
           </button>
-          <button className={`btn ${btnClass}`} onClick={onConfirm} style={confirmVariant === "red" ? { backgroundColor: '#DC2626', color: 'white', border: 'none' } : {}}>
+          <button
+            className={`btn ${btnClass}`}
+            onClick={onConfirm}
+            style={
+              confirmVariant === "red"
+                ? { backgroundColor: "var(--danger)", color: "white", border: "none" }
+                : {}
+            }
+          >
             {confirmLabel}
           </button>
         </div>
