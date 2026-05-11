@@ -2,7 +2,7 @@
 
 > Blockchain-based Academic Certificate Verification System  
 > **Stack:** FastAPI · MongoDB · Polygon Amoy · React 18 · ethers.js  
-> **Last updated:** 2026-05-02
+> **Last updated:** 2026-05-11
 
 ---
 
@@ -43,12 +43,12 @@ Anyone scans QR or uploads PDF
 TrustChain-fixing-frontend/
 ├── backend/                   FastAPI backend
 │   ├── app/
-│   │   ├── main.py            Entry point, CORS, 4 routers
+│   │   ├── main.py            Entry point, CORS, 5 routers
 │   │   ├── config.py          Environment variables (pydantic-settings)
 │   │   ├── database.py        MongoDB Motor client + indexes
 │   │   ├── middleware/        JWT auth guards
 │   │   ├── models/            Pydantic models (user, university, certificate)
-│   │   ├── routers/           auth, universities, certificates, verify
+│   │   ├── routers/           auth, universities, certificates, verify, activities
 │   │   └── services/          hashing, encryption, ipfs, qr, blockchain, funding
 │   ├── contracts/
 │   │   ├── TrustChain_ABI.json
@@ -152,9 +152,10 @@ VITE_POLYGON_RPC_URL=https://rpc-amoy.polygon.technology
 | Router | Prefix | Endpoints | Auth |
 |--------|--------|-----------|------|
 | Auth | `/api/auth` | login, me, logout | JWT |
-| Universities | `/api/universities` | register, applications, approve/reject, suspend/reactivate, wallet, list | Admin / University |
+| Universities | `/api/universities` | register, applications, approve/reject, suspend/reactivate, wallet, list, stats | Admin / University |
 | Certificates | `/api/certificates` | issue, confirm, list, get, revoke, revoke/confirm | University |
 | Verify | `/api/verify` | health, /file, /qr | Public |
+| Activities | `/api/activities` | list (paginated) | Admin |
 
 **Full API docs:** [docs/TrustChain_API_Documentation.md](docs/TrustChain_API_Documentation.md) or `http://localhost:8000/docs` when running.
 
@@ -188,20 +189,24 @@ VITE_POLYGON_RPC_URL=https://rpc-amoy.polygon.technology
 ## Current Status
 
 ### ✅ Complete
-- All 21 backend API endpoints implemented and working
-- Full frontend integration — no mock data
-- Certificate issuance and revocation (two-phase: backend + on-chain signing)
+
+- All 24 backend API endpoints implemented and working (5 routers)
+- Full frontend integration — no mock data anywhere
+- Certificate issuance, revocation, and **download** (two-phase: backend + on-chain signing)
 - Public verification by PDF upload and QR scan (including live camera)
 - Wallet generation, encryption, and session management
 - Admin university management (approve, reject, suspend, reactivate)
+- Admin dashboard with real-time stats, charts, and activity feed
+- Admin activity log — all admin actions recorded in MongoDB
+- Public verification shows `VALID`, `REVOKED`, and `FAKE` results with distinct UI
+- Download certificate button (functional for file-based verification)
 - Light/dark theme system
 
 ### ⬜ Remaining
+
 - **Test suite** — all 4 pytest test files are empty
-- **Certificate download endpoint** — backend not yet implemented
-- **Admin dashboard charts** — no stats endpoint; charts show empty state
-- **Admin activity log** — no backend endpoint; shows empty state
-- **`react-hot-toast`** — used in `RegisterPage.jsx` but not in `package.json`; run `npm install react-hot-toast`
+- **`certificateService.js`** — legacy file, no longer imported, can be removed
+- **`mockData.js`** — data file no longer imported, can be removed
 
 ---
 

@@ -1,6 +1,6 @@
 # TrustChain  Backend Status
 
-> **Last updated:** 2026-05-02
+> **Last updated:** 2026-05-11
 > **Scope:** Backend only (FastAPI + Blockchain + Services)
 > **Repo:** https://github.com/Moabed21/TrustChain
 > **Team:** Alqasam (backend) + Moabed (backend)
@@ -47,7 +47,7 @@ TrustChain is a blockchain-based academic certificate verification system.
 backend/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                  ✅ Complete  lifespan, 4 routers mounted, CORS middleware
+│   ├── main.py                  ✅ Complete  lifespan, 5 routers mounted, CORS middleware
 │   ├── config.py                ✅ Complete  16+ env vars via pydantic-settings
 │   ├── database.py              ✅ Complete  Motor client, 4 indexes, sparse wallet
 │   ├── middleware/
@@ -58,9 +58,10 @@ backend/
 │   │   └── certificate.py       ✅ Complete  CertificateBase/Create/InDB/Response
 │   ├── routers/
 │   │   ├── auth.py              ✅ Complete  3/3 endpoints (login, me, logout)
-│   │   ├── universities.py      ✅ Complete  9/9 endpoints
-│   │   ├── certificates.py      ✅ Complete  6/6 endpoints (issue, confirm, list, get, revoke, revoke/confirm)
-│   │   └── verify.py            ✅ Complete  3/3 endpoints (health, /file, /qr)
+│   │   ├── universities.py      ✅ Complete  10/10 endpoints (+ /stats)
+│   │   ├── certificates.py      ✅ Complete  7/7 endpoints (issue, confirm, list, get, download, revoke, revoke/confirm)
+│   │   ├── verify.py            ✅ Complete  3/3 endpoints (health, /file, /qr)
+│   │   └── activities.py        ✅ Complete  1/1 endpoint (list activities)
 │   ├── services/
 │   │   ├── hashing.py           ✅ Complete  hash_pdf(), hash_to_bytes32()
 │   │   ├── encryption.py        ✅ Complete  AES-256-GCM encrypt/decrypt for PDF + CID
@@ -157,39 +158,43 @@ backend/
 
 ---
 
-## 7. API Endpoints — 21 Total ✅
+## 7. API Endpoints — 25 Total ✅
 
 ### Auth Router — `/api/auth` ✅ 3/3
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
 | `POST` | `/login` | Public | Login — `application/x-www-form-urlencoded` with `username` + `password` |
-| `GET` | `/me` | Any authenticated | Get current user info |
+| `GET` | `/me` | Any authenticated | Get current user info (includes `university_name`) |
 | `POST` | `/logout` | Public | Returns success message (client-side token removal) |
 
-### Universities Router — `/api/universities` ✅ 9/9
+### Universities Router — `/api/universities` ✅ 10/10
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
 | `POST` | `/register` | Public | Submit university application |
 | `GET` | `/applications` | Admin | List pending applications |
-| `PUT` | `/applications/{id}/approve` | Admin | Approve → move to universities collection |
-| `PUT` | `/applications/{id}/reject` | Admin | Mark as rejected |
+| `PUT` | `/applications/{id}/approve` | Admin | Approve → move to universities collection + log activity |
+| `PUT` | `/applications/{id}/reject` | Admin | Mark as rejected + log activity |
+| `GET` | `/stats` | Admin | Aggregate stats: total certs, issued, revoked, monthly breakdown |
 | `GET` | `/{id}` | Admin | Get university details |
-| `PUT` | `/{id}/suspend` | Admin | Suspend an active university |
-| `PUT` | `/{id}/reactivate` | Admin | Reactivate a suspended university |
+| `PUT` | `/{id}/suspend` | Admin | Suspend an active university + log activity |
+| `PUT` | `/{id}/reactivate` | Admin | Reactivate a suspended university + log activity |
 | `PUT` | `/me/wallet` | University | Register wallet + fund + on-chain register |
 | `GET` | `/all_universities` | Admin | List all registered universities (`?page=1&limit=100`) |
 
+> **⚠️ Route ordering:** `/stats` must be declared before `/{id}` in universities.py to prevent FastAPI from matching `stats` as a MongoDB ObjectId.
+
 **University response fields:** `_id`, `university_name`, `country`, `email`, `status`, `wallet_address`, `total_certificates`, `register_date`
 
-### Certificates Router — `/api/certificates` ✅ 6/6
+### Certificates Router — `/api/certificates` ✅ 7/7
 
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
 | `POST` | `/issue` | University | Phase 1: hash PDF, encrypt, IPFS, QR → returns signing data |
 | `POST` | `/{id}/confirm` | University | Phase 2: verify tx receipt → set status "Issued" |
 | `GET` | `/` | University | List own certificates |
+| `GET` | `/{id}/download` | University | Decrypt PDF from IPFS and return as downloadable file |
 | `GET` | `/{id}` | University | Get certificate by ID |
 | `PUT` | `/{id}/revoke` | University | Phase 1: set status "PendingRevocation" → returns cert_hash_bytes |
 | `POST` | `/{id}/revoke/confirm` | University | Phase 2: verify tx receipt → set status "Revoked" |
@@ -203,6 +208,16 @@ backend/
 | `GET` | `/` | Public | Health check |
 | `POST` | `/file` | Public | Upload PDF → hash → blockchain → VALID/REVOKED/FAKE |
 | `POST` | `/qr` | Public | Upload QR image → decode → decrypt CID → fetch IPFS → hash → blockchain |
+
+### Activities Router — `/api/activities` ✅ 1/1
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `GET` | `/` | Admin | Paginated activity log (`?page=1&limit=50`), newest first |
+
+**Activity document fields:** `_id`, `action`, `target`, `actor`, `type`, `date`
+
+**Actions logged:** `approved`, `rejected`, `suspended`, `reactivated` — written by `log_activity()` in universities.py
 
 ---
 
@@ -305,28 +320,32 @@ Phase 2 — POST /api/certificates/{id}/revoke/confirm
 
 ## 12. What's Done vs What's Left
 
-### ✅ Complete — All 21 endpoints implemented
-- Auth router (3/3), Universities router (9/9), Certificates router (6/6), Verify router (3/3)
+### ✅ Complete — All 25 endpoints implemented
+- Auth router (3/3), Universities router (10/10), Certificates router (7/7), Verify router (3/3), Activities router (1/1)
 - All services: hashing, encryption, IPFS, QR, blockchain, funding
 - Smart contract deployed on Polygon Amoy
+- Activity logging on all admin actions (approve, reject, suspend, reactivate)
+- Admin stats endpoint with real certificate counts and monthly breakdown
+- `/api/auth/me` returns `university_name` for university accounts
 
 ### ⬜ Remaining
-- [ ] **Download endpoint** — `GET /api/certificates/{id}/download` (decrypt PDF from IPFS, return file)
+- [ ] **Test suite** — all 4 pytest test files are empty
 
 
 ---
 
 ## 13. Known Issues & Gotchas
 
-| Issue | Details |
-|-------|---------|
-| Login format | `POST /api/auth/login` expects `application/x-www-form-urlencoded` with field `username` (not `email`) |
-| Unused blockchain functions | `issue_certificate_on_chain` and `revoke_certificate_on_chain` exist but are never called |
-| `config.py` type defaults | Several `int` fields have `""` as default — works in practice but technically incorrect |
-| `requirements.txt` unused deps | `passlib`, `ipfshttpclient`, `pymongo` listed but not directly used |
-| Test files empty | All 4 pytest test files are 0 bytes |
-| `get_applications` HTTPException(200) | Using `raise HTTPException(status_code=200)` is unusual — should be a normal return |
-| CORS_ORIGINS | Frontend origin must be listed or all requests will be blocked |
+| Issue | Details | Status |
+|-------|---------|--------|
+| Login format | `POST /api/auth/login` expects `application/x-www-form-urlencoded` with field `username` (not `email`) | By design |
+| Unused blockchain functions | `issue_certificate_on_chain` and `revoke_certificate_on_chain` exist but are never called | By design (frontend signs) |
+| ~~`config.py` type defaults~~ | ~~Several `int` fields have `""` as default~~ | ✅ Fixed — proper int defaults |
+| `requirements.txt` unused deps | `passlib`, `ipfshttpclient`, `pymongo` listed but not directly used | Low priority |
+| Test files empty | All 4 pytest test files are 0 bytes | Remaining |
+| ~~CORS_ORIGINS parse bug~~ | ~~`split(",")` failed on JSON array strings~~ | ✅ Fixed — uses `json.loads()` |
+| ~~CHAIN_ID whitespace~~ | ~~Trailing whitespace caused int parse failure~~ | ✅ Fixed |
+| Route ordering | `/stats` must be before `/{id}` in universities.py | ✅ Fixed |
 
 ---
 

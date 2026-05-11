@@ -1,6 +1,6 @@
 # TrustChain  Frontend Documentation
 
-> **Last updated:** 2026-05-02
+> **Last updated:** 2026-05-11
 > **Scope:** Frontend only (React + ethers.js + Vite)
 > **Team:** Frontend
 
@@ -53,9 +53,9 @@ VITE_POLYGON_RPC_URL=https://rpc-amoy.polygon.technology
 | Revoke certificate | ✅ Real API + on-chain | `PUT /api/certificates/{id}/revoke` → ethers.js sign → `POST /api/certificates/{id}/revoke/confirm` |
 | Public verify by PDF | ✅ Real API | `POST /api/verify/file` |
 | Public verify by QR | ✅ Real API | `POST /api/verify/qr` (file upload or live camera) |
-| Admin dashboard stats | ⚠️ Partial | University + pending counts are real; certificate charts use empty arrays (no `/api/admin/stats` endpoint) |
-| Admin activity log | ⬜ Not integrated | Uses empty array — no backend endpoint exists |
-| Certificate download | ⬜ Not integrated | Backend download endpoint not yet implemented |
+| Admin dashboard stats | ✅ Real API | `GET /api/universities/stats` — total certs, issued, revoked, monthly chart |
+| Admin activity log | ✅ Real API | `GET /api/activities` — paginated, newest first |
+| Certificate download | ✅ Client-side | Uses `URL.createObjectURL()` on the uploaded PDF after successful file-based verification |
 
 ---
 
@@ -71,7 +71,7 @@ frontend/src/
 │   ├── ThemeContext.jsx        ✅ light/dark toggle
 │   └── WalletContext.jsx       ✅ loadWallet(), clearWallet(), pendingPassword
 ├── services/
-│   ├── api.js                  ✅ All 21 backend endpoints mapped, JWT interceptors
+│   ├── api.js                  ✅ All 24 backend endpoints mapped, JWT interceptors
 │   └── certificateService.js   ⚠️ Legacy file (unused — api.js covers all endpoints)
 ├── pages/
 │   ├── PublicPage.jsx          ✅ PDF + QR verification, live camera scan
@@ -81,10 +81,10 @@ frontend/src/
 │   └── UniversityDashboard.jsx ✅ Wrapper + routing + wallet gate
 ├── components/
 │   ├── admin/
-│   │   ├── Dashboard.jsx       ⚠️ Partial  real university/pending counts; charts empty
+│   │   ├── Dashboard.jsx       ✅ Complete  real stats, charts, and activity feed from API
 │   │   ├── PendingApplications.jsx  ✅ Real API — fetch, approve, reject
-│   │   ├── RegisteredUniversities.jsx ✅ Real API — fetch, suspend, reactivate
-│   │   └── ActivityLog.jsx     ⬜ Empty array — no backend endpoint
+│   │   ├── RegisteredUniversities.jsx ✅ Real API — fetch, suspend, reactivate + inline error banner
+│   │   └── ActivityLog.jsx     ✅ Real API — fetch, search, filter by type
 │   ├── university/
 │   │   ├── Dashboard.jsx       ✅ Real API — stats computed from real certificate data
 │   │   ├── IssueCertificate.jsx ✅ Full 3-step flow: backend → ethers.js sign → confirm
@@ -93,7 +93,7 @@ frontend/src/
 │   │   └── WalletSetup.jsx     ✅ ethers.js keygen + keystore + backend registration
 │   └── shared/
 │       ├── ConfirmModal.jsx     ✅ Reusable confirmation dialog
-│       ├── Sidebar.jsx          ✅ Role-aware navigation
+│       ├── Sidebar.jsx          ✅ Role-aware navigation, shows university_name
 │       ├── StatusBadge.jsx      ✅ Status pill (Issued, Revoked, Pending, etc.)
 │       ├── ThemeToggle.jsx      ✅ Light/dark toggle
 │       └── ErrorBoundary.jsx    ✅ React error boundary wrapper
@@ -111,7 +111,7 @@ frontend/src/
 1. `LoginPage` calls `login(email, password)` from `AuthContext`
 2. `AuthContext.login()` calls `loginAPI()` → `POST /api/auth/login` (form-encoded: `username` + `password`)
 3. On success: stores JWT in `localStorage`, calls `getMeAPI()` → `GET /api/auth/me`
-4. User object (`id`, `email`, `role`, `status`, `wallet_address`) stored in state + `localStorage`
+4. User object (`id`, `email`, `role`, `status`, `wallet_address`, `university_name`) stored in state + `localStorage`
 5. If `role === "university"`: calls `loadWallet(password)` from `WalletContext` to decrypt keystore
 
 ### Wallet Decryption at Login
@@ -138,7 +138,8 @@ frontend/src/
 - **Verify by QR (upload):** file input → `verifyByQrAPI()` → `POST /api/verify/qr`
 - **Verify by QR (camera):** uses `window.BarcodeDetector` API for live scanning → captures frame → `POST /api/verify/qr`
 - Falls back gracefully if `BarcodeDetector` not supported (prompts QR image upload instead)
-- Result states: VALID (green), REVOKED (orange), FAKE/not found (red)
+- Result states: VALID (green), REVOKED (orange), FAKE (red with distinct "Certificate Does Not Exist" message)
+- Download button: functional for file-based verification (uses `URL.createObjectURL()` on the uploaded PDF)
 
 ### Login Page (`/login`)
 - Calls real backend `POST /api/auth/login`
@@ -163,10 +164,11 @@ frontend/src/
 
 ### Admin
 
-**Dashboard.jsx** — `⚠️ Partial`
+**Dashboard.jsx** — `✅ Complete`
 - Fetches real data: pending applications count, registered universities count, suspended count
-- Charts (`Certificates Issued per Month`, `Certificate Status` pie) use empty arrays — no backend stats endpoint exists
-- Recent Activity section empty — no backend activity log endpoint
+- Fetches admin stats from `GET /api/universities/stats` — total certs, issued/revoked counts, monthly breakdown
+- Line chart (`Certificates Issued per Month`) and pie chart (`Certificate Status`) use real data
+- Recent Activity section fetches from `GET /api/activities` (last 5 entries)
 - Notifications panel is dynamic (shows pending count, suspended count)
 
 **PendingApplications.jsx** — `✅ Complete`
@@ -182,11 +184,15 @@ frontend/src/
 - Reactivate → `PUT /api/universities/{id}/reactivate`
 - Search filters by `university_name`, `country`, `register_date`
 - Table fields: `university_name`, `country`, `status`, `register_date`, `total_certificates`, `wallet_address`
+- Inline error banner for action failures (replaces `alert()` calls)
 
-**ActivityLog.jsx** — `⬜ Not integrated`
-- UI fully built with search + filter tabs
-- Uses empty `mockActivityLog = []` array — backend has no activity log endpoint
-- Will show "No Activity Found" empty state until endpoint is implemented
+**ActivityLog.jsx** — `✅ Complete`
+- Fetches from `GET /api/activities` on mount (up to 100 entries)
+- Search by action, target, or actor
+- Filter tabs: All, Universities, Certificates
+- Action badges: approved (green), rejected (red), suspended (orange), reactivated (green)
+- Timestamps formatted with `toLocaleString()`
+- Empty state with contextual message
 
 ### University
 
@@ -237,6 +243,7 @@ Three-stage flow with stage labels shown to the user:
 
 **Sidebar.jsx** — `✅ Complete`
 - Adapts nav items to `role` ('admin' | 'university')
+- Shows `university_name` in the profile section (falls back to email prefix for admins)
 - Admin links: Dashboard, Pending Applications, Registered Universities, Activity Log
 - University links: Dashboard, Issue Certificate, Issued Certificates
 
@@ -277,6 +284,8 @@ Axios instance with:
 | `confirmRevocationAPI(id, txHash)` | POST | `/api/certificates/{id}/revoke/confirm` | University |
 | `verifyByFileAPI(pdfFile)` | POST | `/api/verify/file` | Public (multipart) |
 | `verifyByQrAPI(qrImageFile)` | POST | `/api/verify/qr` | Public (multipart) |
+| `getAdminStatsAPI()` | GET | `/api/universities/stats` | Admin |
+| `getActivitiesAPI(page, limit)` | GET | `/api/activities` | Admin |
 
 ---
 
@@ -345,10 +354,6 @@ Fully implemented light/dark mode via CSS custom properties on `data-theme` attr
 - [x] Protected + role-based routing
 
 ### ⬜ Remaining
-- [ ] **Admin dashboard charts** — certificate volume chart and pie chart are empty (no backend stats endpoint)
-- [ ] **Admin activity log** — `ActivityLog.jsx` shows empty state (no backend endpoint)
-- [ ] **Certificate download** — "Download Certificate" button present on PublicPage but not wired (backend endpoint not yet implemented)
-- [ ] **`react-hot-toast` dependency** — `RegisterPage.jsx` imports `toast` from `react-hot-toast` but the package is NOT listed in `package.json` — will crash; either install the package (`npm install react-hot-toast`) or replace with inline error state
 - [ ] **`certificateService.js` cleanup** — legacy file, no longer used, should be removed
 - [ ] **`mockData.js` cleanup** — data file no longer imported anywhere, should be removed
 
@@ -358,9 +363,6 @@ Fully implemented light/dark mode via CSS custom properties on `data-theme` attr
 
 | Issue | Severity | Details |
 |-------|----------|---------|
-| `react-hot-toast` missing from package.json | 🔴 Critical | `RegisterPage.jsx` imports `toast` from `react-hot-toast` but it is not installed. App will crash on registration attempt. Fix: `npm install react-hot-toast` |
-| Certificate download button | 🟡 Medium | "⬇ Download Certificate" button on PublicPage is rendered but has no `onClick` handler — backend download endpoint not yet implemented |
-| Admin charts empty | 🟡 Medium | `Certificates Issued per Month` and `Certificate Status` charts on admin Dashboard use empty arrays. Need a backend stats endpoint or derive from existing data |
 | `certificateService.js` never used | 🟢 Low | Legacy file that duplicates functionality already in `api.js` |
 | `mockData.js` never imported | 🟢 Low | File remains in `src/data/` but nothing imports it |
 | Camera QR scan — limited browser support | 🟢 Low | `window.BarcodeDetector` is not available in Firefox. App gracefully falls back to file upload |
