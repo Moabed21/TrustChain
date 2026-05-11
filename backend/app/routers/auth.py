@@ -90,8 +90,9 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "id": str(current_user["_id"]),
         "email": current_user["email"],
         "role": current_user["role"],
-        "status": current_user.get("status",None),
-        "wallet_address": current_user.get("wallet_address",None)
+        "status": current_user.get("status", None),
+        "wallet_address": current_user.get("wallet_address", None),
+        "university_name": current_user.get("university_name", None),
     }
 @router.post("/logout")
 async def logout():

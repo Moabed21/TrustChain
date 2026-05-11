@@ -142,6 +142,15 @@ export async function registerWalletAPI(walletAddress) {
   return data;
 }
 
+
+//  GET /api/universities/stats
+//  Admin-only — aggregate stats for dashboard charts.
+
+export async function getAdminStatsAPI() {
+  const { data } = await API.get('/api/universities/stats');
+  return data;
+}
+
 //certificates api
 //post create certificate endpoint
 export async function createCertificateAPI({ student_name, major, graduation_date, pdf }) {
@@ -158,14 +167,9 @@ export async function createCertificateAPI({ student_name, major, graduation_dat
   return data;
 }
 
-/**
- * POST /api/certificates/:id/confirm
- * University-only  step 2 of issuance.
- * Sends the MetaMask tx_hash to backend for on-chain verification.
- * @param {string} certificateId
- * @param {string} txHash  the transaction hash from MetaMask
- * @returns {{ message, certificate_id, tx_hash, status }}
- */
+// POST /api/certificates/:id/confirm
+// University-only  step 2 of issuance.
+// Sends the MetaMask tx_hash to backend for on-chain verification.
 export async function confirmCertificateAPI(certificateId, txHash) {
   const { data } = await API.post(`/api/certificates/${certificateId}/confirm`, {
     tx_hash: txHash,
@@ -173,45 +177,30 @@ export async function confirmCertificateAPI(certificateId, txHash) {
   return data;
 }
 
-/**
- * GET /api/certificates
- * University-only  list all certificates issued by this university.
- * @returns {Array<{ _id, student_name, major, graduation_date, hashed_certificate, status, issue_date, tx_hash, qr_code }>}
- */
+// GET /api/certificates
+// University-only  list all certificates issued by this university.
 export async function listCertificatesAPI() {
   const { data } = await API.get('/api/certificates');
   return data;
 }
 
-/**
- * GET /api/certificates/:id
- * University-only  single certificate details.
- * @param {string} certificateId
- */
+// GET /api/certificates/:id
+// University-only  single certificate details.
 export async function getCertificateAPI(certificateId) {
   const { data } = await API.get(`/api/certificates/${certificateId}`);
   return data;
 }
 
-/**
- * PUT /api/certificates/:id/revoke
- * University-only  step 1 of revocation.
- * Marks cert as PendingRevocation, returns hash for MetaMask signing.
- * @param {string} certificateId
- * @returns {{ message, certificate_id, cert_hash_bytes }}
- */
+// PUT /api/certificates/:id/revoke
+// University-only  step 1 of revocation.
+// Marks cert as PendingRevocation, returns hash for MetaMask signing.
 export async function revokeCertificateAPI(certificateId) {
   const { data } = await API.put(`/api/certificates/${certificateId}/revoke`);
   return data;
 }
 
-/**
- * POST /api/certificates/:id/revoke/confirm
- * University-only  step 2 of revocation.
- * @param {string} certificateId
- * @param {string} txHash
- * @returns {{ message, certificate_id, tx_hash, status }}
- */
+// POST /api/certificates/:id/revoke/confirm
+// University-only  step 2 of revocation.
 export async function confirmRevocationAPI(certificateId, txHash) {
   const { data } = await API.post(`/api/certificates/${certificateId}/revoke/confirm`, {
     tx_hash: txHash,
@@ -219,16 +208,20 @@ export async function confirmRevocationAPI(certificateId, txHash) {
   return data;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// VERIFY  (/api/verify)
-// ═══════════════════════════════════════════════════════════════════
 
-/**
- * POST /api/verify/file
- * Public  verify a certificate by uploading its PDF.
- * @param {File} pdfFile
- * @returns {{ certificate_hash, status: "VALID"|"REVOKED"|"FAKE", issuer, timestamp }}
- */
+// GET /api/certificates/:id/download
+// University-only — downloads the original PDF from IPFS (decrypted).
+export async function downloadCertificateAPI(certificateId) {
+  const { data } = await API.get(`/api/certificates/${certificateId}/download`, {
+    responseType: 'blob',
+  });
+  return data;
+}
+
+//verify api 
+
+// POST /api/verify/file
+// Public  verify a certificate by uploading its PDF.
 export async function verifyByFileAPI(pdfFile) {
   const formData = new FormData();
   formData.append('pdf', pdfFile);
@@ -239,12 +232,8 @@ export async function verifyByFileAPI(pdfFile) {
   return data;
 }
 
-/**
- * POST /api/verify/qr
- * Public  verify a certificate by uploading a QR code image.
- * @param {File} qrImageFile  PNG/JPG of the QR code
- * @returns {{ certificate_hash, status: "VALID"|"REVOKED"|"FAKE", issuer, timestamp }}
- */
+// POST /api/verify/qr
+// Public  verify a certificate by uploading a QR code image.
 export async function verifyByQrAPI(qrImageFile) {
   const formData = new FormData();
   formData.append('qr_image', qrImageFile);
@@ -252,6 +241,15 @@ export async function verifyByQrAPI(qrImageFile) {
   const { data } = await API.post('/api/verify/qr', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+  return data;
+}
+
+//activity api 
+// GET /api/activities
+// Admin-only — paginated activity log, newest first.
+
+export async function getActivitiesAPI(page = 1, limit = 50) {
+  const { data } = await API.get('/api/activities', { params: { page, limit } });
   return data;
 }
 

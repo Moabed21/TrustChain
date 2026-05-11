@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { Eye, Trash2, Search, FileText as FileTextIcon, Loader2 } from "lucide-react";
+import { Eye, Trash2, Search, FileText as FileTextIcon, Loader2, Download } from "lucide-react";
 import { useWallet } from "../../context/WalletContext";  // decrypted wallet for signing revocation tx
 import StatusBadge from "../shared/StatusBadge";
 import ConfirmModal from "../shared/ConfirmModal";
@@ -23,6 +23,7 @@ import {
   listCertificatesAPI,
   revokeCertificateAPI,
   confirmRevocationAPI,
+  downloadCertificateAPI,
 } from "../../services/api";
 import TrustChainABI from "../../contracts/TrustChain_ABI.json";
 
@@ -40,6 +41,7 @@ const IssuedCertificates = () => {
   const [revoking, setRevoking] = useState(false);        // true while revocation steps are running
   const [revokeStage, setRevokeStage] = useState("");     // label shown during revocation
   const [detailsModalState, setDetailsModalState] = useState({ isOpen: false, target: null });
+  const [downloading, setDownloading] = useState(null); // certificate _id currently downloading
 
   // fetch certificates from backend on mount
   useEffect(() => {
@@ -120,6 +122,27 @@ const IssuedCertificates = () => {
     } finally {
       setRevoking(false);
       setRevokeStage("");
+    }
+  };
+
+  const handleDownload = async (cert) => {
+    setDownloading(cert._id);
+    try {
+      const blob = await downloadCertificateAPI(cert._id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${(cert.student_name || "certificate").replace(/\s+/g, "_")}_certificate.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      const message = typeof detail === "object" ? detail.message : detail;
+      setError(message || "Failed to download certificate. Please try again.");
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -241,6 +264,21 @@ const IssuedCertificates = () => {
                         >
                           <Eye size={16} /> View Details
                         </button>
+                        {/* download button for Issued or Revoked certs — they have valid IPFS data */}
+                        {(cert.status === "Issued" || cert.status === "Revoked") && (
+                          <button
+                            className="btn btn-outline"
+                            style={{ padding: "6px 12px" }}
+                            onClick={() => handleDownload(cert)}
+                            disabled={downloading === cert._id}
+                          >
+                            {downloading === cert._id ? (
+                              <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Downloading...</>
+                            ) : (
+                              <><Download size={16} /> Download</>  
+                            )}
+                          </button>
+                        )}
                         {/* revoke button only shown for Issued certs — not Pending, PendingRevocation, or Revoked */}
                         {cert.status === "Issued" && (
                           <button

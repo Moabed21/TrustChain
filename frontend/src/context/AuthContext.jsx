@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
       role: profile.role,
       status: profile.status,
       wallet_address: profile.wallet_address,
+      university_name: profile.university_name || null,
     };
 
     setUser(userData);
@@ -61,6 +62,7 @@ export const AuthProvider = ({ children }) => {
       role: profile.role,
       status: profile.status,
       wallet_address: profile.wallet_address,
+      university_name: profile.university_name || null,
     };
     setUser(userData);
     setRole(userData.role);

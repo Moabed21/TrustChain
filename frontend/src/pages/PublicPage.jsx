@@ -27,6 +27,7 @@ const PublicPage = () => {
   const [scanStatus, setScanStatus] = useState("idle");
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
+  const verifiedFileRef = useRef(null); // holds the uploaded PDF for download after verification
   const rafRef = useRef(null);
   const detectorRef = useRef(null);
   const scanInFlightRef = useRef(false);
@@ -194,10 +195,12 @@ const PublicPage = () => {
     if (!file) return;
     setHasSearched(true);
     setVerifyError("");
+    verifiedFileRef.current = file; // keep reference for download
     try {
       const data = await verifyByFileAPI(file);
       setResult(data);
     } catch (err) {
+      verifiedFileRef.current = null;
       setResult(null);
       const detail =
         err.response?.data?.detail ||
@@ -287,6 +290,18 @@ const PublicPage = () => {
     }
 
     if (result.status === "VALID") {
+      const handleDownload = () => {
+        if (!verifiedFileRef.current) return;
+        const url = URL.createObjectURL(verifiedFileRef.current);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = verifiedFileRef.current.name || "certificate.pdf";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
       return (
         <div
           style={{
@@ -356,23 +371,26 @@ const PublicPage = () => {
             >
               ✓ Valid
             </div>
-            <button
-              style={{
-                background: "var(--accent)",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                fontSize: "13px",
-                fontWeight: "500",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              ⬇ Download Certificate
-            </button>
+            {verifiedFileRef.current && (
+              <button
+                onClick={handleDownload}
+                style={{
+                  background: "var(--accent)",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                ⬇ Download Certificate
+              </button>
+            )}
           </div>
         </div>
       );
@@ -439,6 +457,73 @@ const PublicPage = () => {
             }}
           >
             ⚠ Revoked
+          </div>
+        </div>
+      );
+    }
+
+    // FAKE — hash not found on blockchain at all (forged/unissued document)
+    if (result.status === "FAKE") {
+      return (
+        <div
+          style={{
+            background: "var(--bg-sidebar)",
+            borderRadius: "12px",
+            padding: "28px 32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: "20px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "50%",
+                background: "rgba(220,38,38,0.1)",
+                border: "2px solid var(--danger)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <XCircle size={24} color="var(--danger)" />
+            </div>
+            <div>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "700",
+                  color: "var(--hero-text)",
+                }}
+              >
+                Certificate Does Not Exist
+              </div>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "var(--sidebar-text)",
+                  marginTop: "4px",
+                }}
+              >
+                This document has not been recorded on the blockchain — it may be forged or unissued
+              </div>
+            </div>
+          </div>
+          <div
+            style={{
+              background: "var(--danger)",
+              color: "white",
+              padding: "4px 12px",
+              borderRadius: "999px",
+              fontSize: "11px",
+              fontWeight: "600",
+            }}
+          >
+            ✗ Fake
           </div>
         </div>
       );

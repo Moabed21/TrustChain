@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, universities, certificates, verify
+from app.routers import auth, universities, certificates, verify, activities
 from app.database import connect_db, close_db
 from app.config import settings
 from contextlib import asynccontextmanager
@@ -30,6 +30,7 @@ app.include_router(auth.router,         prefix="/api/auth",         tags=["Auth"
 app.include_router(universities.router, prefix="/api/universities", tags=["Universities"])
 app.include_router(certificates.router, prefix="/api/certificates", tags=["Certificates"])
 app.include_router(verify.router,       prefix="/api/verify",       tags=["Verify"])
+app.include_router(activities.router,   prefix="/api/activities",   tags=["Activities"])
 
 @app.get("/")
 async def root():

@@ -1,6 +1,6 @@
 # TrustChain  Full API Documentation
 ### Base URL: `http://127.0.0.1:8000`
-### Updated: April 28, 2026
+### Updated: May 11, 2026
 
 ---
 
@@ -9,6 +9,7 @@
 2. [Universities Router](#2-universities-router)
 3. [Certificates Router](#3-certificates-router)
 4. [Verify Router](#4-verify-router)
+5. [Activities Router](#5-activities-router)
 
 ---
 
@@ -17,10 +18,11 @@
 | Router | File | Prefix | Endpoints | Status |
 |--------|------|--------|-----------|--------|
 | Auth | `app/routers/auth.py` | `/api/auth` | 3 |  Done |
-| Universities | `app/routers/universities.py` | `/api/universities` | 9 |  Done |
+| Universities | `app/routers/universities.py` | `/api/universities` | 10 |  Done |
 | Certificates | `app/routers/certificates.py` | `/api/certificates` | 6 |  Done |
 | Verify | `app/routers/verify.py` | `/api/verify` | 3 |  Done |
-| **Total** | | | **21** | |
+| Activities | `app/routers/activities.py` | `/api/activities` | 1 |  Done |
+| **Total** | | | **23** | |
 
 ---
 
@@ -133,9 +135,12 @@ Headers:
   "email": "admin@trustchain.com",
   "role": "admin",
   "status": null,
-  "wallet_address": null
+  "wallet_address": null,
+  "university_name": null
 }
 ```
+
+> **Note:** `university_name` is returned for university accounts (from db.universities). For admin accounts it is always `null`.
 
 **Error Responses:**
 | Code | Reason |
@@ -725,6 +730,151 @@ If fewer than `limit` results are returned, you've reached the last page.
 
 ---
 
+## GET `/api/universities/stats`
+### Status:  Done
+
+**Purpose:**
+Returns aggregate statistics for the admin dashboard: total certificates across all universities, issued/revoked counts, and a monthly breakdown for the last 6 months.
+
+**Access:** Admin only
+
+**Who Uses It:**
+- Admin dashboard charts and stat cards
+
+**Internal Flow:**
+```
+1. Verify JWT token → is this admin?
+   → if not admin → return 403
+2. Sum total_certificates from all university documents
+3. Count certificates with status "Issued" and "Revoked" from db.certificates
+4. For each of the last 6 months, count certificates issued in that month
+5. Return aggregated data
+```
+
+**Request:**
+```
+Headers:
+  Authorization: Bearer <admin_access_token>
+
+URL:
+  GET /api/universities/stats
+```
+
+**Response:**
+```json
+{
+  "total_certificates": 45,
+  "issued": 42,
+  "revoked": 3,
+  "monthly_data": [
+    { "month": "Dec 2025", "certificates": 2 },
+    { "month": "Jan 2026", "certificates": 5 },
+    { "month": "Feb 2026", "certificates": 8 },
+    { "month": "Mar 2026", "certificates": 12 },
+    { "month": "Apr 2026", "certificates": 10 },
+    { "month": "May 2026", "certificates": 8 }
+  ]
+}
+```
+
+**Error Responses:**
+| Code | Reason |
+|------|---------|
+| 401 | Token missing or invalid |
+| 403 | Not admin |
+
+> **Note:** `/stats` must be declared before `/{id}` in the router file to prevent FastAPI from matching "stats" as a MongoDB ObjectId.
+
+---
+
+# 5. Activities Router
+### File: `app/routers/activities.py`
+### Prefix: `/api/activities`
+### Status:  Done
+
+---
+
+## GET `/api/activities`
+### Status:  Done
+
+**Purpose:**
+Returns a paginated activity log of all admin actions (approve, reject, suspend, reactivate), sorted by most recent first.
+
+**Access:** Admin only
+
+**Who Uses It:**
+- Admin activity log page
+- Admin dashboard "Recent Activity" widget (last 5 entries)
+
+**Internal Flow:**
+```
+1. Verify JWT token → is this admin?
+   → if not admin → return 403
+2. Query db.activities sorted by date descending
+3. Apply pagination (skip/limit)
+4. Convert _id to string, date to ISO format
+5. Return list of activity entries
+```
+
+**Request:**
+```
+Headers:
+  Authorization: Bearer <admin_access_token>
+
+URL:
+  GET /api/activities?page=1&limit=50
+
+Query Parameters:
+  page:  integer (default: 1)
+  limit: integer (default: 50)
+```
+
+**Response:**
+```json
+[
+  {
+    "_id": "64abc123def456789012",
+    "action": "approved",
+    "target": "University of Jordan",
+    "actor": "admin@trustchain.com",
+    "type": "university",
+    "date": "2026-05-10T14:30:00+00:00"
+  },
+  {
+    "_id": "64abc123def456789013",
+    "action": "suspended",
+    "target": "PSUT",
+    "actor": "admin@trustchain.com",
+    "type": "university",
+    "date": "2026-05-09T10:15:00+00:00"
+  }
+]
+```
+
+**Activity Actions:**
+| Action | When it's logged |
+|--------|-----------------|
+| `approved` | Admin approves a university application |
+| `rejected` | Admin rejects a university application |
+| `suspended` | Admin suspends an active university |
+| `reactivated` | Admin reactivates a suspended university |
+
+**Error Responses:**
+| Code | Reason |
+|------|---------|
+| 401 | Token missing or invalid |
+| 403 | Not admin |
+
+**How Activities Are Created:**
+```
+Activities are NOT created via a separate API call.
+They are logged automatically by log_activity() in universities.py
+whenever an admin performs an approve/reject/suspend/reactivate action.
+The activities router only reads from this collection.
+```
+
+---
+
 # 3. Certificates Router
 ### File: `app/routers/certificates.py`
 ### Prefix: `/api/certificates`
@@ -1087,20 +1237,22 @@ Body:
 | 5 | GET `/api/universities/applications` | universities.py | Admin |  Done |
 | 6 | PUT `/api/universities/applications/{id}/approve` | universities.py | Admin |  Done |
 | 7 | PUT `/api/universities/applications/{id}/reject` | universities.py | Admin |  Done |
-| 8 | GET `/api/universities/{id}` | universities.py | Admin |  Done |
-| 9 | PUT `/api/universities/{id}/suspend` | universities.py | Admin |  Done |
-| 10 | PUT `/api/universities/{id}/reactivate` | universities.py | Admin |  Done |
-| 11 | PUT `/api/universities/me/wallet` | universities.py | University |  Done |
-| 12 | GET `/api/universities/all_universities` | universities.py | Admin |  Done |
-| 13 | POST `/api/certificates` | certificates.py | University |  Done |
-| 14 | POST `/api/certificates/{id}/confirm` | certificates.py | University |  Done |
-| 15 | GET `/api/certificates` | certificates.py | University |  Done |
-| 16 | GET `/api/certificates/{id}` | certificates.py | University |  Done |
-| 17 | PUT `/api/certificates/{id}/revoke` | certificates.py | University |  Done |
-| 18 | POST `/api/certificates/{id}/revoke/confirm` | certificates.py | University |  Done |
-| 19 | GET `/api/verify` | verify.py | Public |  Done |
-| 20 | POST `/api/verify/file` | verify.py | Public |  Done |
-| 21 | POST `/api/verify/qr` | verify.py | Public |  Done |
+| 8 | GET `/api/universities/stats` | universities.py | Admin |  Done |
+| 9 | GET `/api/universities/{id}` | universities.py | Admin |  Done |
+| 10 | PUT `/api/universities/{id}/suspend` | universities.py | Admin |  Done |
+| 11 | PUT `/api/universities/{id}/reactivate` | universities.py | Admin |  Done |
+| 12 | PUT `/api/universities/me/wallet` | universities.py | University |  Done |
+| 13 | GET `/api/universities/all_universities` | universities.py | Admin |  Done |
+| 14 | POST `/api/certificates/issue` | certificates.py | University |  Done |
+| 15 | POST `/api/certificates/{id}/confirm` | certificates.py | University |  Done |
+| 16 | GET `/api/certificates` | certificates.py | University |  Done |
+| 17 | GET `/api/certificates/{id}` | certificates.py | University |  Done |
+| 18 | PUT `/api/certificates/{id}/revoke` | certificates.py | University |  Done |
+| 19 | POST `/api/certificates/{id}/revoke/confirm` | certificates.py | University |  Done |
+| 20 | GET `/api/verify` | verify.py | Public |  Done |
+| 21 | POST `/api/verify/file` | verify.py | Public |  Done |
+| 22 | POST `/api/verify/qr` | verify.py | Public |  Done |
+| 23 | GET `/api/activities` | activities.py | Admin |  Done |
 
 
 ---
