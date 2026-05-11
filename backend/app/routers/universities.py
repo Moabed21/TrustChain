@@ -11,6 +11,17 @@ from app.services.blockchain import register_university_on_chain
 from pydantic import BaseModel
 router = APIRouter()
 
+async def log_activity(db, action: str, target: str, actor: str, activity_type: str):
+    """Write an activity entry to the activities collection."""
+    await db.activities.insert_one({
+        "action": action,       # "approved", "rejected", "suspended", "reactivated"
+        "target": target,       # university name
+        "actor": actor,         # admin email
+        "type": activity_type,  # "university"
+        "date": datetime.now(timezone.utc),
+    })
+
+
 @router.post("/register")
 async def register_university(university:UniversityCreate):
     db = get_db()
@@ -51,7 +62,9 @@ async def reject_application(id:str,current_user: dict=Depends(require_admin)):
     if not application:
         raise HTTPException(status_code=404, detail={"message":"Application not found"})
     await db.applications.update_one({"_id": ObjectId(id)}, {"$set": {"status": "Rejected"}})
+    await log_activity(db, "rejected", application["university_name"], current_user["email"], "university")
     return {"message":"Application rejected"}
+
 
 @router.put("/applications/{id}/approve")
 async def approve_application(id:str,current_user: dict=Depends(require_admin)):
@@ -72,7 +85,9 @@ async def approve_application(id:str,current_user: dict=Depends(require_admin)):
     }
     await db.universities.insert_one(university)
     await db.applications.delete_one({"_id": ObjectId(id)})
+    await log_activity(db, "approved", application["university_name"], current_user["email"], "university")
     return {"message":"Application approved"}
+
 
 @router.get("/all_universities")
 #admin-only endpoint to list all registered universities for the dashboard with paging to prevent overload 
@@ -92,6 +107,63 @@ async def get_all_universities(
 
     return universities
 
+@router.get("/stats")
+async def get_admin_stats(current_user: dict = Depends(require_admin)):
+    """Admin-only — aggregate stats for the dashboard charts."""
+    db = get_db()
+
+    # sum total_certificates from all universities
+    unis = await db.universities.find({}, {"total_certificates": 1}).to_list(length=None)
+    total_certs = sum(u.get("total_certificates", 0) for u in unis)
+
+    # count issued and revoked across all certs
+    all_certs = await db.certificates.find(
+        {}, {"status": 1, "issue_date": 1}
+    ).to_list(length=None)
+
+    issued_count = sum(1 for c in all_certs if c.get("status") == "Issued")
+    revoked_count = sum(1 for c in all_certs if c.get("status") == "Revoked")
+
+    def normalize_dt(dt):
+        """Ensure datetime is timezone-aware (UTC)."""
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    # monthly breakdown for the last 6 months (oldest -> newest)
+    now = datetime.now(timezone.utc)
+    monthly = []
+    for i in range(5, -1, -1):
+        # go back i months from this month using proper month arithmetic
+        month_offset = now.month - i
+        year_offset = now.year + (month_offset - 1) // 12
+        month = ((month_offset - 1) % 12) + 1
+        month_start = datetime(year_offset, month, 1, tzinfo=timezone.utc)
+        next_month = month + 1 if month < 12 else 1
+        next_year = year_offset if month < 12 else year_offset + 1
+        month_end = datetime(next_year, next_month, 1, tzinfo=timezone.utc)
+
+        count = 0
+        for c in all_certs:
+            dt = normalize_dt(c.get("issue_date"))
+            if dt and month_start <= dt < month_end:
+                count += 1
+
+        monthly.append({
+            "month": month_start.strftime("%b %Y"),
+            "certificates": count,
+        })
+
+    return {
+        "total_certificates": total_certs,
+        "issued": issued_count,
+        "revoked": revoked_count,
+        "monthly_data": monthly,
+    }
+
+
 @router.get("/{id}")
 async def get_university(id:str,current_user: dict=Depends(require_admin)):
     db = get_db()
@@ -100,6 +172,7 @@ async def get_university(id:str,current_user: dict=Depends(require_admin)):
         raise HTTPException(status_code=404, detail={"message":"University not found"})
     university["_id"] = str(university["_id"])
     return university
+
 @router.put("/{id}/suspend")
 async def suspend_university(id:str,current_user: dict=Depends(require_admin)):
     db = get_db()
@@ -108,9 +181,10 @@ async def suspend_university(id:str,current_user: dict=Depends(require_admin)):
         raise HTTPException(status_code=404, detail={"message":"University not found"})
     if university["status"] == "Suspended":
         raise HTTPException(status_code=400, detail={"message":"University is already suspended"})
-    
     await db.universities.update_one({"_id": ObjectId(id)}, {"$set": {"status": "Suspended"}})
+    await log_activity(db, "suspended", university["university_name"], current_user["email"], "university")
     return {"message":"University suspended successfully"}
+
 @router.put("/{id}/reactivate")
 async def reactivate_university(id:str,current_user: dict=Depends(require_admin)):
     db = get_db()
@@ -119,9 +193,10 @@ async def reactivate_university(id:str,current_user: dict=Depends(require_admin)
         raise HTTPException(status_code=404, detail={"message":"University not found"})
     if university["status"] == "Active":
         raise HTTPException(status_code=400, detail={"message":"University is already active"})
-    
     await db.universities.update_one({"_id": ObjectId(id)}, {"$set": {"status": "Active"}})
+    await log_activity(db, "reactivated", university["university_name"], current_user["email"], "university")
     return {"message":"University reactivated successfully"}
+
 
 class WalletRegistration(BaseModel):
     wallet_address:str

@@ -1,12 +1,14 @@
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from io import BytesIO
 from app.database import get_db
 from app.middleware.auth_middleware import require_university
 from app.services.hashing import hash_pdf
-from app.services.encryption import encrypt_pdf, encrypt_cid
-from app.services.ipfs import upload_to_ipfs
+from app.services.encryption import encrypt_pdf, encrypt_cid, decrypt_cid, decrypt_pdf
+from app.services.ipfs import upload_to_ipfs, fetch_from_ipfs
 from app.services.qr import generate_qr
 from app.services.blockchain import verify_transaction_receipt, is_university_registered
 
@@ -157,6 +159,56 @@ async def list_certificates(current_user: dict = Depends(require_university)):
         #objectid to string for json serialization
 
     return certificates
+
+@router.get("/{certificate_id}/download")
+#this endpoint downloads the original PDF from IPFS by decrypting the stored CID and PDF
+#it must be declared BEFORE /{certificate_id} so FastAPI doesn't match "download" as a certificate ID
+async def download_certificate(
+    certificate_id: str,
+    current_user: dict = Depends(require_university)
+):
+    db = get_db()
+    certificate = await db.certificates.find_one({"_id": ObjectId(certificate_id)})
+    if not certificate:
+        raise HTTPException(status_code=404, detail="Certificate not found")
+    if certificate["university_id"] != str(current_user["_id"]):
+        raise HTTPException(status_code=403, detail="This certificate belongs to another university")
+    if certificate["status"] not in ("Issued", "Revoked"):
+        raise HTTPException(status_code=400, detail="Certificate is not yet issued  cannot download")
+    #only issued or revoked certs have been confirmed on-chain and have valid IPFS data
+
+    enc_cid = certificate.get("enc_cid")
+    if not enc_cid:
+        raise HTTPException(status_code=404, detail="No encrypted CID found for this certificate")
+
+    #step 1: decrypt the CID to get the plain IPFS hash
+    try:
+        plain_cid = decrypt_cid(enc_cid)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt CID")
+
+    #step 2: fetch the encrypted PDF from IPFS via Pinata gateway
+    try:
+        encrypted_pdf_str = await fetch_from_ipfs(plain_cid)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch from IPFS: {str(e)}")
+
+    #step 3: decrypt the PDF to get the original raw bytes
+    try:
+        pdf_bytes = decrypt_pdf(encrypted_pdf_str)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt PDF from IPFS")
+
+    #build a filename from the student name for a nice download experience
+    student_name = certificate.get("student_name", "certificate").replace(" ", "_")
+    filename = f"{student_name}_certificate.pdf"
+
+    #stream the raw PDF bytes back to the client as a downloadable file
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 @router.get("/{certificate_id}")
 #this endpoint is used to get a certificate by its id 
