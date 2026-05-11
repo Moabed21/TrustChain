@@ -27,6 +27,8 @@ import { useAuth } from "../../context/AuthContext";
 import {
   getPendingApplicationsAPI,
   getAllUniversitiesAPI,
+  getAdminStatsAPI,
+  getActivitiesAPI,
 } from "../../services/api";
 
 const Dashboard = () => {
@@ -35,6 +37,8 @@ const Dashboard = () => {
 
   const [pendingApplications, setPendingApplications] = useState([]);
   const [registeredUniversities, setRegisteredUniversities] = useState([]);
+  const [stats, setStats] = useState({ total_certificates: 0, issued: 0, revoked: 0, monthly_data: [] });
+  const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch real data from APIs on mount
@@ -46,7 +50,6 @@ const Dashboard = () => {
           const apps = await getPendingApplicationsAPI();
           setPendingApplications(Array.isArray(apps) ? apps : []);
         } catch {
-          // no pending apps or error  keep empty
           setPendingApplications([]);
         }
 
@@ -57,6 +60,22 @@ const Dashboard = () => {
         } catch {
           setRegisteredUniversities([]);
         }
+
+        // Fetch admin stats (total certs + monthly breakdown)
+        try {
+          const s = await getAdminStatsAPI();
+          setStats(s);
+        } catch {
+          // stats unavailable — keep defaults
+        }
+
+        // Fetch recent activity (last 5 entries)
+        try {
+          const acts = await getActivitiesAPI(1, 5);
+          setRecentActivity(Array.isArray(acts) ? acts : []);
+        } catch {
+          setRecentActivity([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -64,10 +83,6 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  // These stay empty until certificates API is integrated
-  const mockIssuedCertificates = [];
-  const mockMonthlyData = [];
-  const mockActivityLog = [];
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -75,21 +90,16 @@ const Dashboard = () => {
     day: "numeric",
   });
 
-  const validCount = mockIssuedCertificates.filter(
-    (c) => c.status === "Issued",
-  ).length;
-  const revokedCount = mockIssuedCertificates.filter(
-    (c) => c.status === "Revoked",
-  ).length;
-
   const pieData = [
-    { name: "Valid", value: validCount },
-    { name: "Revoked", value: revokedCount },
+    { name: "Valid", value: stats.issued },
+    { name: "Revoked", value: stats.revoked },
   ];
 
   const COLORS = ["#16A34A", "#DC2626"];
 
-  const recentActivity = mockActivityLog.slice(0, 5);
+  const suspendedUniversitiesCount = registeredUniversities.filter(
+    (u) => u.status === "Suspended",
+  ).length;
 
   const getActionIcon = (action) => {
     switch (action) {
@@ -99,16 +109,12 @@ const Dashboard = () => {
         return <XCircle size={16} color="var(--danger)" />;
       case "suspended":
         return <Ban size={16} color="var(--warning)" />;
-      case "revoked":
+      case "reactivated":
         return <AlertCircle size={16} color="var(--warning)" />;
       default:
         return null;
     }
   };
-
-  const suspendedUniversitiesCount = registeredUniversities.filter(
-    (u) => u.status === "Suspended",
-  ).length;
 
   if (loading) {
     return (
@@ -202,7 +208,7 @@ const Dashboard = () => {
             </span>
           </div>
           <div>
-            <div className="stat-number">{mockIssuedCertificates.length}</div>
+            <div className="stat-number">{stats.total_certificates}</div>
             <div className="stat-label">Total Certificates</div>
           </div>
         </div>
@@ -249,7 +255,7 @@ const Dashboard = () => {
             Certificates Issued per Month
           </h3>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={mockMonthlyData}>
+            <LineChart data={stats.monthly_data}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="month"
@@ -335,48 +341,54 @@ const Dashboard = () => {
             </span>
           </div>
           <div>
-            {recentActivity.map((activity) => (
-              <div
-                key={activity.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "12px 16px",
-                  borderBottom: "1px solid var(--border)",
-                  transition: "background-color 0.2s",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    "var(--primary-light)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "transparent")
-                }
-              >
-                <div style={{ marginRight: "16px", marginTop: "4px" }}>
-                  {getActionIcon(activity.action)}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {activity.action}
-                  </div>
-                  <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    {activity.target}
-                  </div>
-                </div>
-                <div
-                  style={{ fontSize: "12px", color: "var(--text-secondary)" }}
-                >
-                  {activity.date}
-                </div>
+            {recentActivity.length === 0 ? (
+              <div style={{ padding: "16px", color: "var(--text-secondary)", fontSize: "14px", textAlign: "center" }}>
+                No activity yet
               </div>
-            ))}
+            ) : (
+              recentActivity.map((activity) => (
+                <div
+                  key={activity._id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "12px 16px",
+                    borderBottom: "1px solid var(--border)",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      "var(--primary-light)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
+                >
+                  <div style={{ marginRight: "16px", marginTop: "4px" }}>
+                    {getActionIcon(activity.action)}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {activity.action}
+                    </div>
+                    <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                      {activity.target}
+                    </div>
+                  </div>
+                  <div
+                    style={{ fontSize: "12px", color: "var(--text-secondary)" }}
+                  >
+                    {new Date(activity.date).toLocaleDateString()}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

@@ -11,7 +11,8 @@ import ConfirmModal from "../shared/ConfirmModal";
 const RegisteredUniversities = () => {
   const [universities, setUniversities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [fetchError, setFetchError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -27,7 +28,7 @@ const RegisteredUniversities = () => {
         const data = await getAllUniversitiesAPI();
         setUniversities(Array.isArray(data) ? data : []);
       } catch (err) {
-        setError(err.response?.data?.detail || "Failed to load universities");
+        setFetchError(err.response?.data?.detail || "Failed to load universities");
       } finally {
         setLoading(false);
       }
@@ -73,7 +74,7 @@ const RegisteredUniversities = () => {
     } catch (err) {
       const detail = err.response?.data?.detail;
       const message = typeof detail === "object" ? detail.message : detail;
-      alert(message || `Failed to ${type} university`);
+      setActionError(message || `Failed to ${type} university`);
     } finally {
       setActionLoading(false);
       setModalState({ isOpen: false, type: null, target: null });
@@ -102,12 +103,12 @@ const RegisteredUniversities = () => {
     );
   }
 
-  if (error) {
+  if (fetchError) {
     return (
       <div
         style={{ padding: "24px", textAlign: "center", color: "var(--danger)" }}
       >
-        <p>{error}</p>
+        <p>{fetchError}</p>
         <button
           className="btn btn-primary"
           style={{ marginTop: "12px" }}
@@ -130,6 +131,28 @@ const RegisteredUniversities = () => {
         </p>
       </div>
 
+      {/* inline error banner for action errors */}
+      {actionError && (
+        <div style={{
+          padding: "12px 16px",
+          backgroundColor: "var(--invalid-badge-bg)",
+          color: "var(--danger)",
+          borderRadius: "8px",
+          marginBottom: "16px",
+          fontSize: "14px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}>
+          <span>{actionError}</span>
+          <button
+            onClick={() => setActionError("")}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger)", fontSize: "18px", lineHeight: 1 }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div
         style={{
           display: "flex",

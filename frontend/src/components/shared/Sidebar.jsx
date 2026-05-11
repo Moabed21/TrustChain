@@ -166,7 +166,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
               flexShrink: 0,
             }}
           >
-            {(user?.email || "U").charAt(0).toUpperCase()}
+            {(user?.university_name || user?.email || "U").charAt(0).toUpperCase()}
           </div>
           <div>
             <div
@@ -177,7 +177,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
                 lineHeight: "1.2",
               }}
             >
-              {user?.email?.split("@")[0] || "User"}
+              {user?.university_name || user?.email?.split("@")[0] || "User"}
             </div>
             <div
               style={{

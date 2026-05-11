@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { CheckCircle2, XCircle, Ban, AlertCircle, Search } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { CheckCircle2, XCircle, Ban, AlertCircle, Search, Loader2 } from "lucide-react";
+import { getActivitiesAPI } from "../../services/api";
 
-const mockActivityLog = [];
 const getActionIcon = (action) => {
   switch (action) {
     case "approved":
@@ -10,7 +10,7 @@ const getActionIcon = (action) => {
       return <XCircle size={16} color="var(--danger)" />;
     case "suspended":
       return <Ban size={16} color="var(--warning)" />;
-    case "revoked":
+    case "reactivated":
       return <AlertCircle size={16} color="var(--warning)" />;
     default:
       return null;
@@ -28,9 +28,9 @@ const getActionBadge = (action) => {
       background: "var(--revoked-badge-bg)",
       color: "var(--revoked-badge-text)",
     },
-    revoked: {
-      background: "var(--revoked-badge-bg)",
-      color: "var(--revoked-badge-text)",
+    reactivated: {
+      background: "var(--valid-badge-bg)",
+      color: "var(--valid-badge-text)",
     },
   };
   const style = styles[action] || {};
@@ -51,16 +51,49 @@ const getActionBadge = (action) => {
 };
 
 const ActivityLog = () => {
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
 
-  const filtered = mockActivityLog.filter((item) => {
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const data = await getActivitiesAPI(1, 100);
+        setActivities(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("getActivitiesAPI failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActivities();
+  }, []);
+
+  const filtered = activities.filter((item) => {
     const matchesSearch =
-      item.target.toLowerCase().includes(search.toLowerCase()) ||
-      item.action.toLowerCase().includes(search.toLowerCase());
+      (item.target || "").toLowerCase().includes(search.toLowerCase()) ||
+      (item.action || "").toLowerCase().includes(search.toLowerCase()) ||
+      (item.actor || "").toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filterType === "all" || item.type === filterType;
     return matchesSearch && matchesFilter;
   });
+
+  if (loading) {
+    return (
+      <div>
+        <div style={{ marginBottom: "24px" }}>
+          <h2 style={{ fontSize: "24px", marginBottom: "8px" }}>Activity Log</h2>
+          <p style={{ color: "var(--text-secondary)" }}>
+            Complete history of all administrative actions
+          </p>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+          <Loader2 size={32} style={{ color: "var(--primary)", animation: "spin 1s linear infinite" }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -169,14 +202,16 @@ const ActivityLog = () => {
                       </div>
                       <p className="empty-state-title">No Activity Found</p>
                       <p className="empty-state-subtitle">
-                        Try adjusting your search or filter
+                        {activities.length === 0
+                          ? "Admin actions will appear here after you approve, reject, suspend or reactivate universities"
+                          : "Try adjusting your search or filter"}
                       </p>
                     </div>
                   </td>
                 </tr>
               ) : (
                 filtered.map((item) => (
-                  <tr key={item.id}>
+                  <tr key={item._id}>
                     <td style={{ padding: "12px 16px" }}>
                       {getActionIcon(item.action)}
                     </td>
@@ -197,7 +232,7 @@ const ActivityLog = () => {
                     <td
                       style={{ fontSize: "13px", color: "var(--text-muted)" }}
                     >
-                      {item.date}
+                      {new Date(item.date).toLocaleString()}
                     </td>
                   </tr>
                 ))
