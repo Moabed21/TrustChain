@@ -1,0 +1,40 @@
+name: Backend CI Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies and check syntax
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m compileall .
+
+      - name: Build Docker image
+        run: |
+          cd backend
+          docker build -t trustchain-backend:latest .
+          docker save -o trustchain-backend.tar trustchain-backend:latest
+
+      - name: Upload Docker image as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trustchain-backend-image
+          path: backend/trustchain-backend.tar
+          retention-days: 7
